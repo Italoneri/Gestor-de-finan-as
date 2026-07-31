@@ -1,5 +1,11 @@
 <section class="card auth-card">
     <h1>Entrar</h1>
+    <?php if (!empty($status)) : ?>
+        <p class="alert alert-success"><?= e($status) ?></p>
+    <?php endif; ?>
+    <?php if (!empty($error)) : ?>
+        <p class="alert alert-error"><?= e($error) ?></p>
+    <?php endif; ?>
     <?php if (isset($errors['credentials'])) : ?>
         <p class="alert alert-error"><?= e($errors['credentials']) ?></p>
     <?php endif; ?>
@@ -13,6 +19,12 @@
         <div class="field">
             <label for="password">Senha</label>
             <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+        <div class="field checkbox-row">
+            <label class="checkbox-label">
+                <input type="checkbox" name="remember" value="1"> Lembrar de mim
+            </label>
+            <a href="/forgot-password">Esqueci minha senha</a>
         </div>
         <button type="submit" class="btn btn-primary">Entrar</button>
     </form>
