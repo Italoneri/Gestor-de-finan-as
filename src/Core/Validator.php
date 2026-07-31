@@ -20,6 +20,12 @@ final class Validator
     public const NAME_PATTERN = "/^[\p{L}\p{M}' -]{2,60}$/u";
 
     /**
+     * Same shape as NAME_PATTERN plus digits (\d): short user-facing labels
+     * like category and account names ("Cartão 2", "Vale-refeição").
+     */
+    public const LABEL_PATTERN = "/^[\p{L}\p{M}\d' -]{2,40}$/u";
+
+    /**
      * Deliberately loose structural check: non-space/@ chunk, "@", domain with
      * at least one dot. filter_var(FILTER_VALIDATE_EMAIL) below is the source
      * of truth — a fully RFC-strict regex is unmaintainable and rejects valid
@@ -48,6 +54,14 @@ final class Validator
         if (preg_match(self::NAME_PATTERN, $value) !== 1) {
             $this->errors[$field] =
                 'Nome deve ter de 2 a 60 letras (acentos, espaços, hífen e apóstrofo são permitidos).';
+        }
+    }
+
+    public function label(string $field, string $value): void
+    {
+        if (preg_match(self::LABEL_PATTERN, $value) !== 1) {
+            $this->errors[$field] =
+                'Nome deve ter de 2 a 40 caracteres (letras, números, espaços, hífen e apóstrofo).';
         }
     }
 
@@ -80,6 +94,15 @@ final class Validator
         if (!hash_equals($password, $confirmation)) {
             $this->errors[$field] = 'As senhas não conferem.';
         }
+    }
+
+    /**
+     * For validations that don't fit a pattern rule (enum membership,
+     * business checks) but should land in the same error bag.
+     */
+    public function fail(string $field, string $message): void
+    {
+        $this->errors[$field] = $message;
     }
 
     public function fails(): bool

@@ -79,6 +79,15 @@ final class AuthService
         return $this->userId() !== null;
     }
 
+    /**
+     * For code running behind the auth middleware, where a missing session
+     * user is a programming error, not a user mistake.
+     */
+    public function requireUserId(): int
+    {
+        return $this->userId() ?? throw new \RuntimeException('unauthenticated request past auth middleware');
+    }
+
     public function userId(): ?int
     {
         $id = $this->session->get(self::SESSION_KEY);

@@ -164,6 +164,21 @@ final class AuthServiceTest extends TestCase
         $this->assertSame(LoginResult::Success, $result);
     }
 
+    public function testRequireUserIdReturnsIdWhenAuthenticated(): void
+    {
+        $userId = $this->registerVerifiedUser();
+        $this->auth->loginUsingId($userId);
+
+        $this->assertSame($userId, $this->auth->requireUserId());
+    }
+
+    public function testRequireUserIdThrowsWhenUnauthenticated(): void
+    {
+        $this->expectException(\RuntimeException::class);
+
+        $this->auth->requireUserId();
+    }
+
     private function registerVerifiedUser(): int
     {
         $userId = $this->auth->register('Ana Souza', 'ana@exemplo.com', 'Senha@123');

@@ -149,6 +149,51 @@ final class ValidatorTest extends TestCase
         $this->assertNotNull($validator->error('password'));
     }
 
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function validLabels(): array
+    {
+        return [
+            'simple' => ['Mercado'],
+            'with digits' => ['Cartão 2'],
+            'accented' => ['Poupança Caixa'],
+            'hyphen' => ['Vale-refeição'],
+        ];
+    }
+
+    #[DataProvider('validLabels')]
+    public function testAcceptsValidLabels(string $label): void
+    {
+        $validator = new Validator();
+        $validator->label('name', $label);
+
+        $this->assertFalse($validator->fails());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidLabels(): array
+    {
+        return [
+            'empty' => [''],
+            'single char' => ['A'],
+            'too long' => [str_repeat('a', 41)],
+            'html' => ['<b>x</b>'],
+            'symbols' => ['Conta #1!'],
+        ];
+    }
+
+    #[DataProvider('invalidLabels')]
+    public function testRejectsInvalidLabels(string $label): void
+    {
+        $validator = new Validator();
+        $validator->label('name', $label);
+
+        $this->assertNotNull($validator->error('name'));
+    }
+
     public function testRejectsMismatchedConfirmation(): void
     {
         $validator = new Validator();
