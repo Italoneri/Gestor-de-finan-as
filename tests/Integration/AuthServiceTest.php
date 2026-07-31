@@ -10,7 +10,6 @@ use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\LoginRateLimiter;
 use App\Services\LoginResult;
-use App\Services\RegisterResult;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +17,6 @@ final class AuthServiceTest extends TestCase
 {
     private PDO $pdo;
     private AuthService $auth;
-    private LoginRateLimiter $rateLimiter;
 
     protected function setUp(): void
     {
@@ -29,38 +27,45 @@ final class AuthServiceTest extends TestCase
         $this->pdo->exec('PRAGMA foreign_keys = ON');
         Migrator::run($this->pdo, __DIR__ . '/../../database/migrations');
 
-        $this->rateLimiter = new LoginRateLimiter($this->pdo);
         $this->auth = new AuthService(
             new UserRepository($this->pdo),
-            $this->rateLimiter,
+            new LoginRateLimiter($this->pdo),
             new Session('test_session'),
         );
     }
 
-    public function testRegistersUserWithHashedPasswordAndLogsIn(): void
+    public function testRegistersUserWithHashedPasswordWithoutLoggingIn(): void
     {
-        $result = $this->auth->register('Ana Souza', 'ana@exemplo.com', 'Senha@123');
+        $userId = $this->auth->register('Ana Souza', 'ana@exemplo.com', 'Senha@123');
 
-        $this->assertSame(RegisterResult::Registered, $result);
-        $this->assertTrue($this->auth->check());
+        $this->assertIsInt($userId);
+        $this->assertFalse($this->auth->check());
 
-        $row = $this->pdo->query('SELECT password_hash FROM users')->fetch();
-        $this->assertNotSame('Senha@123', $row['password_hash']);
+        $row = $this->pdo->query('SELECT password_hash, email_verified_at FROM users')->fetch();
+        $this->assertNull($row['email_verified_at']);
         $this->assertTrue(password_verify('Senha@123', $row['password_hash']));
     }
 
-    public function testRejectsDuplicateEmailOnRegister(): void
+    public function testReturnsNullForDuplicateEmailOnRegister(): void
     {
         $this->auth->register('Ana Souza', 'ana@exemplo.com', 'Senha@123');
 
-        $result = $this->auth->register('Outra Ana', 'ana@exemplo.com', 'Outra@456');
+        $this->assertNull($this->auth->register('Outra Ana', 'ana@exemplo.com', 'Outra@456'));
+    }
 
-        $this->assertSame(RegisterResult::EmailTaken, $result);
+    public function testRejectsLoginWhenEmailNotVerified(): void
+    {
+        $this->auth->register('Ana Souza', 'ana@exemplo.com', 'Senha@123');
+
+        $result = $this->auth->attemptLogin('ana@exemplo.com', 'Senha@123', '10.0.0.1');
+
+        $this->assertSame(LoginResult::EmailNotVerified, $result);
+        $this->assertFalse($this->auth->check());
     }
 
     public function testLogsInWithValidCredentials(): void
     {
-        $this->registerAndLogout();
+        $this->registerVerifiedUser();
 
         $result = $this->auth->attemptLogin('ana@exemplo.com', 'Senha@123', '10.0.0.1');
 
@@ -69,9 +74,19 @@ final class AuthServiceTest extends TestCase
         $this->assertNotNull($this->auth->userId());
     }
 
+    public function testLoginUsingIdAuthenticatesSession(): void
+    {
+        $userId = $this->registerVerifiedUser();
+
+        $this->auth->loginUsingId($userId);
+
+        $this->assertTrue($this->auth->check());
+        $this->assertSame($userId, $this->auth->userId());
+    }
+
     public function testRejectsWrongPassword(): void
     {
-        $this->registerAndLogout();
+        $this->registerVerifiedUser();
 
         $result = $this->auth->attemptLogin('ana@exemplo.com', 'Errada@123', '10.0.0.1');
 
@@ -88,7 +103,7 @@ final class AuthServiceTest extends TestCase
 
     public function testBlocksEmailAfterFiveFailedAttempts(): void
     {
-        $this->registerAndLogout();
+        $this->registerVerifiedUser();
 
         for ($i = 0; $i < 5; $i++) {
             $this->auth->attemptLogin('ana@exemplo.com', 'Errada@123', '10.0.0.1');
@@ -112,7 +127,7 @@ final class AuthServiceTest extends TestCase
 
     public function testSuccessfulLoginClearsFailedAttemptsForEmail(): void
     {
-        $this->registerAndLogout();
+        $this->registerVerifiedUser();
 
         for ($i = 0; $i < 4; $i++) {
             $this->auth->attemptLogin('ana@exemplo.com', 'Errada@123', '10.0.0.1');
@@ -127,7 +142,8 @@ final class AuthServiceTest extends TestCase
 
     public function testLogoutRemovesAuthenticatedUser(): void
     {
-        $this->auth->register('Ana Souza', 'ana@exemplo.com', 'Senha@123');
+        $this->registerVerifiedUser();
+        $this->auth->attemptLogin('ana@exemplo.com', 'Senha@123', '10.0.0.1');
 
         $this->auth->logout();
 
@@ -137,7 +153,7 @@ final class AuthServiceTest extends TestCase
 
     public function testIsolatesRateLimitBetweenDifferentEmailsAndIps(): void
     {
-        $this->registerAndLogout();
+        $this->registerVerifiedUser();
 
         for ($i = 0; $i < 5; $i++) {
             $this->auth->attemptLogin('outro@exemplo.com', 'Errada@123', '198.51.100.9');
@@ -148,9 +164,12 @@ final class AuthServiceTest extends TestCase
         $this->assertSame(LoginResult::Success, $result);
     }
 
-    private function registerAndLogout(): void
+    private function registerVerifiedUser(): int
     {
-        $this->auth->register('Ana Souza', 'ana@exemplo.com', 'Senha@123');
-        $this->auth->logout();
+        $userId = $this->auth->register('Ana Souza', 'ana@exemplo.com', 'Senha@123');
+        assert($userId !== null);
+        $this->pdo->exec("UPDATE users SET email_verified_at = '2026-01-01 00:00:00' WHERE id = {$userId}");
+
+        return $userId;
     }
 }

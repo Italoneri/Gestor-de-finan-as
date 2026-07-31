@@ -26,20 +26,21 @@ final class AuthService
     ) {
     }
 
-    public function register(string $name, string $email, string $password): RegisterResult
+    /**
+     * Creates the account without logging in — the user must verify the
+     * e-mail first. Returns the new user id, or null when the e-mail is
+     * already taken (unique constraint, no check-then-insert race).
+     */
+    public function register(string $name, string $email, string $password): ?int
     {
         try {
-            $userId = $this->users->create($name, $email, password_hash($password, PASSWORD_DEFAULT));
+            return $this->users->create($name, $email, password_hash($password, PASSWORD_DEFAULT));
         } catch (PDOException $e) {
             if ((string) $e->getCode() === '23000') {
-                return RegisterResult::EmailTaken;
+                return null;
             }
             throw $e;
         }
-
-        $this->authenticate($userId);
-
-        return RegisterResult::Registered;
     }
 
     public function attemptLogin(string $email, string $password, string $ip): LoginResult
@@ -57,8 +58,13 @@ final class AuthService
             return LoginResult::InvalidCredentials;
         }
 
+        // only revealed to whoever already holds the correct password
+        if ($user->emailVerifiedAt === null) {
+            return LoginResult::EmailNotVerified;
+        }
+
         $this->rateLimiter->clear($email);
-        $this->authenticate($user->id);
+        $this->loginUsingId($user->id);
 
         return LoginResult::Success;
     }
@@ -87,7 +93,10 @@ final class AuthService
         return $id === null ? null : $this->users->findById($id);
     }
 
-    private function authenticate(int $userId): void
+    /**
+     * Also used by the remember-me bootstrap after a cookie token checks out.
+     */
+    public function loginUsingId(int $userId): void
     {
         // new session id on privilege change kills fixated sessions
         $this->session->regenerate();

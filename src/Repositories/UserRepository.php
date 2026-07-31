@@ -33,6 +33,19 @@ final class UserRepository
         return $row === false ? null : User::fromRow($row);
     }
 
+    public function updatePassword(int $id, string $passwordHash): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?');
+        $stmt->execute([$passwordHash, date('c'), $id]);
+    }
+
+    public function markEmailVerified(int $id): void
+    {
+        $now = date('c');
+        $stmt = $this->pdo->prepare('UPDATE users SET email_verified_at = ?, updated_at = ? WHERE id = ?');
+        $stmt->execute([$now, $now, $id]);
+    }
+
     /**
      * Duplicate e-mails surface as PDOException SQLSTATE 23000 (unique
      * constraint) — the caller decides how to translate that.
