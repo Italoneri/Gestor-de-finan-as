@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Controllers\AccountController;
 use App\Controllers\AuthController;
+use App\Controllers\CategoryController;
 use App\Controllers\PasswordResetController;
 use App\Controllers\RegistrationController;
 use App\Core\Config;
@@ -14,6 +16,8 @@ use App\Core\Response;
 use App\Core\Router;
 use App\Core\Session;
 use App\Core\View;
+use App\Repositories\AccountRepository;
+use App\Repositories\CategoryRepository;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\EmailVerificationService;
@@ -85,6 +89,8 @@ $view->share('userName', $auth->user()?->name);
 $authController = new AuthController($auth, $rememberMe, $view, $session, $secureCookies);
 $registration = new RegistrationController($auth, $verification, $mailer, $view, $session, $appUrl);
 $passwordReset = new PasswordResetController($resets, $mailer, $view, $session, $appUrl);
+$categoryCtrl = new CategoryController(new CategoryRepository($pdo), $auth, $view, $session);
+$accountCtrl = new AccountController(new AccountRepository($pdo), $auth, $view, $session);
 
 $router = new Router();
 
@@ -116,5 +122,41 @@ $router->post('/reset-password', Middleware::csrf(
     $csrf,
     fn (Request $r): Response => $passwordReset->resetPassword($r),
 ));
+
+$router->get('/categories', Middleware::auth($auth, fn (): Response => $categoryCtrl->index()));
+$router->post('/categories', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r): Response => $categoryCtrl->store($r),
+)));
+$router->get('/categories/{id}/edit', Middleware::auth(
+    $auth,
+    fn (Request $r, array $p): Response => $categoryCtrl->edit((int) $p['id']),
+));
+$router->post('/categories/{id}', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r, array $p): Response => $categoryCtrl->update($r, (int) $p['id']),
+)));
+$router->post('/categories/{id}/delete', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r, array $p): Response => $categoryCtrl->destroy((int) $p['id']),
+)));
+
+$router->get('/accounts', Middleware::auth($auth, fn (): Response => $accountCtrl->index()));
+$router->post('/accounts', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r): Response => $accountCtrl->store($r),
+)));
+$router->get('/accounts/{id}/edit', Middleware::auth(
+    $auth,
+    fn (Request $r, array $p): Response => $accountCtrl->edit((int) $p['id']),
+));
+$router->post('/accounts/{id}', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r, array $p): Response => $accountCtrl->update($r, (int) $p['id']),
+)));
+$router->post('/accounts/{id}/delete', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r, array $p): Response => $accountCtrl->destroy((int) $p['id']),
+)));
 
 $router->dispatch(Request::fromGlobals())->send();

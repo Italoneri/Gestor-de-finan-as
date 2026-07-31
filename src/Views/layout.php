@@ -11,7 +11,10 @@
         <div class="topbar-inner">
             <a class="brand" href="/">Finanças</a>
             <?php if (!empty($userName)) : ?>
-                <nav class="topbar-nav" aria-label="Sessão">
+                <nav class="topbar-nav" aria-label="Principal">
+                    <a href="/">Painel</a>
+                    <a href="/categories">Categorias</a>
+                    <a href="/accounts">Contas</a>
                     <span class="muted"><?= e($userName) ?></span>
                     <form method="post" action="/logout">
                         <?= csrf_field($csrfToken) ?>
