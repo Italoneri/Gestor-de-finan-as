@@ -7,6 +7,20 @@
     <link rel="stylesheet" href="/assets/css/app.css">
 </head>
 <body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="/">Finanças</a>
+            <?php if (!empty($userName)) : ?>
+                <nav class="topbar-nav" aria-label="Sessão">
+                    <span class="muted"><?= e($userName) ?></span>
+                    <form method="post" action="/logout">
+                        <?= csrf_field($csrfToken) ?>
+                        <button type="submit" class="btn-link">Sair</button>
+                    </form>
+                </nav>
+            <?php endif; ?>
+        </div>
+    </header>
     <main class="container">
         <?= $content ?>
     </main>

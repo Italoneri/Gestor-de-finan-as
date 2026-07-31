@@ -1,5 +1,4 @@
 <section class="card">
-    <h1>Controle Financeiro Pessoal</h1>
-    <p>Fundação instalada com sucesso.</p>
-    <p class="muted">Autenticação e módulos financeiros chegam nas próximas fases.</p>
+    <h1>Olá, <?= e($userName ?? '') ?></h1>
+    <p class="muted">Painel em construção — transações, categorias e relatórios chegam nas próximas fases.</p>
 </section>

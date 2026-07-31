@@ -10,3 +10,12 @@ function e(?string $value): string
 {
     return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
+
+/**
+ * Hidden CSRF input for state-changing forms. The field name must match
+ * what the csrf middleware reads (App\Core\Csrf::FIELD).
+ */
+function csrf_field(string $token): string
+{
+    return '<input type="hidden" name="_token" value="' . e($token) . '">';
+}

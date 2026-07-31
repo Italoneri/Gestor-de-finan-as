@@ -6,8 +6,19 @@ namespace App\Core;
 
 final class View
 {
+    /** @var array<string, mixed> */
+    private array $shared = [];
+
     public function __construct(private readonly string $viewsPath)
     {
+    }
+
+    /**
+     * Values available to every template (auth state, csrf token for forms).
+     */
+    public function share(string $key, mixed $value): void
+    {
+        $this->shared[$key] = $value;
     }
 
     /**
@@ -15,8 +26,9 @@ final class View
      */
     public function render(string $template, array $data = [], int $status = 200): Response
     {
-        $content = $this->capture($template, $data);
-        $html = $this->capture('layout', [...$data, 'content' => $content]);
+        $merged = [...$this->shared, ...$data];
+        $content = $this->capture($template, $merged);
+        $html = $this->capture('layout', [...$merged, 'content' => $content]);
 
         return Response::html($html, $status);
     }
