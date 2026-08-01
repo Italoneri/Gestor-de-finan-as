@@ -179,7 +179,14 @@ $router->post('/accounts/{id}/delete', Middleware::auth($auth, Middleware::csrf(
     fn (Request $r, array $p): Response => $accountCtrl->destroy((int) $p['id']),
 )));
 
-$router->get('/transactions', Middleware::auth($auth, fn (): Response => $transactionCtrl->index()));
+$router->get('/transactions', Middleware::auth(
+    $auth,
+    fn (Request $r): Response => $transactionCtrl->index($r),
+));
+$router->get('/transactions/export', Middleware::auth(
+    $auth,
+    fn (Request $r): Response => $transactionCtrl->export($r),
+));
 $router->post('/transactions', Middleware::auth($auth, Middleware::csrf(
     $csrf,
     fn (Request $r): Response => $transactionCtrl->store($r),

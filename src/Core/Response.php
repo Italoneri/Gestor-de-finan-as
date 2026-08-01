@@ -21,6 +21,14 @@ final class Response
         return new self($status, $body, ['Content-Type' => 'text/html; charset=utf-8']);
     }
 
+    public static function download(string $body, string $filename, string $contentType): self
+    {
+        return new self(200, $body, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
     public static function redirect(string $to, int $status = 302): self
     {
         return new self($status, '', ['Location' => $to]);

@@ -386,3 +386,23 @@ input[type="month"] {
     display: flex;
     gap: 0.5rem;
 }
+
+.list-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.filter-clear {
+    align-self: center;
+    margin-top: 1.4rem;
+}

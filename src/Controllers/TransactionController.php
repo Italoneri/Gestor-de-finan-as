@@ -10,14 +10,19 @@ use App\Core\Session;
 use App\Core\Validator;
 use App\Core\View;
 use App\Models\Money;
+use App\Models\TransactionFilter;
 use App\Models\TransactionInput;
 use App\Repositories\AccountRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\TransactionRepository;
 use App\Services\AuthService;
+use App\Services\TransactionCsvExporter;
 
 final class TransactionController
 {
+    private const PER_PAGE = 15;
+    private const EXPORT_LIMIT = 5000;
+
     public function __construct(
         private readonly TransactionRepository $transactions,
         private readonly CategoryRepository $categories,
@@ -28,13 +33,21 @@ final class TransactionController
     ) {
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $userId = $this->auth->requireUserId();
+        $filter = TransactionFilter::fromQuery($request->queryAll());
+        $total = $this->transactions->countFor($userId, $filter);
+        $totalPages = max(1, (int) ceil($total / self::PER_PAGE));
+        $page = min($filter->page, $totalPages);
 
         return $this->view->render('transactions/index', [
             'title' => 'Transações',
-            'transactions' => $this->transactions->allForUser($userId),
+            'transactions' => $this->transactions->search($userId, $filter, self::PER_PAGE, $page),
+            'filter' => $filter,
+            'total' => $total,
+            'page' => $page,
+            'totalPages' => $totalPages,
             'categories' => $this->categories->allForUser($userId),
             'accounts' => $this->accounts->allForUser($userId),
             'status' => $this->session->pullFlash('status'),
@@ -42,6 +55,19 @@ final class TransactionController
             'errors' => $this->session->pullFlash('errors') ?? [],
             'old' => $this->session->pullFlash('old') ?? [],
         ]);
+    }
+
+    public function export(Request $request): Response
+    {
+        $userId = $this->auth->requireUserId();
+        $filter = TransactionFilter::fromQuery($request->queryAll());
+        $rows = $this->transactions->search($userId, $filter, self::EXPORT_LIMIT, 1);
+
+        return Response::download(
+            TransactionCsvExporter::export($rows),
+            'transacoes-' . date('Y-m-d') . '.csv',
+            'text/csv; charset=UTF-8',
+        );
     }
 
     public function store(Request $request): Response
