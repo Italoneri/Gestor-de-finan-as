@@ -111,6 +111,121 @@ final class TransactionRepositoryTest extends TestCase
         $this->assertNull($this->repo->find($this->anaId, $id));
     }
 
+    public function testSearchFiltersByPeriod(): void
+    {
+        $this->repo->create($this->anaId, $this->input(date: '2026-06-30', description: 'fora'));
+        $this->repo->create($this->anaId, $this->input(date: '2026-07-10', description: 'dentro'));
+        $this->repo->create($this->anaId, $this->input(date: '2026-08-01', description: 'depois'));
+
+        $filter = \App\Models\TransactionFilter::fromQuery(['from' => '2026-07-01', 'to' => '2026-07-31']);
+        $found = $this->repo->search($this->anaId, $filter, perPage: 10, page: 1);
+
+        $this->assertSame(['dentro'], array_map(fn ($t) => $t->description, $found));
+        $this->assertSame(1, $this->repo->countFor($this->anaId, $filter));
+    }
+
+    public function testSearchFiltersByCategoryAndType(): void
+    {
+        $incomeCat = $this->insertIncomeCategory($this->anaId, 'Salário');
+        $this->repo->create($this->anaId, $this->input(description: 'despesa mercado'));
+        $this->repo->create($this->anaId, new TransactionInput(
+            accountId: $this->anaAccount,
+            categoryId: $incomeCat,
+            type: CategoryType::Income,
+            amountCents: 500000,
+            description: 'salário',
+            date: '2026-07-05',
+        ));
+
+        $byCategory = $this->repo->search(
+            $this->anaId,
+            \App\Models\TransactionFilter::fromQuery(['category_id' => (string) $incomeCat]),
+            perPage: 10,
+            page: 1,
+        );
+        $byType = $this->repo->search(
+            $this->anaId,
+            \App\Models\TransactionFilter::fromQuery(['type' => 'expense']),
+            perPage: 10,
+            page: 1,
+        );
+
+        $this->assertSame(['salário'], array_map(fn ($t) => $t->description, $byCategory));
+        $this->assertSame(['despesa mercado'], array_map(fn ($t) => $t->description, $byType));
+    }
+
+    public function testSearchMatchesDescriptionSubstring(): void
+    {
+        $this->repo->create($this->anaId, $this->input(description: 'Compras no mercado'));
+        $this->repo->create($this->anaId, $this->input(description: 'Cinema'));
+
+        $found = $this->repo->search(
+            $this->anaId,
+            \App\Models\TransactionFilter::fromQuery(['q' => 'mercado']),
+            perPage: 10,
+            page: 1,
+        );
+
+        $this->assertSame(['Compras no mercado'], array_map(fn ($t) => $t->description, $found));
+    }
+
+    public function testSearchEscapesLikeWildcards(): void
+    {
+        $this->repo->create($this->anaId, $this->input(description: 'Desconto 100% aplicado'));
+        $this->repo->create($this->anaId, $this->input(description: 'Sem desconto nenhum'));
+
+        $found = $this->repo->search(
+            $this->anaId,
+            \App\Models\TransactionFilter::fromQuery(['q' => '100%']),
+            perPage: 10,
+            page: 1,
+        );
+
+        $this->assertSame(['Desconto 100% aplicado'], array_map(fn ($t) => $t->description, $found));
+    }
+
+    public function testSearchSortsByAmountAscending(): void
+    {
+        $this->repo->create($this->anaId, $this->input(amountCents: 300, description: 'c'));
+        $this->repo->create($this->anaId, $this->input(amountCents: 100, description: 'a'));
+        $this->repo->create($this->anaId, $this->input(amountCents: 200, description: 'b'));
+
+        $found = $this->repo->search(
+            $this->anaId,
+            \App\Models\TransactionFilter::fromQuery(['sort' => 'amount', 'dir' => 'asc']),
+            perPage: 10,
+            page: 1,
+        );
+
+        $this->assertSame(['a', 'b', 'c'], array_map(fn ($t) => $t->description, $found));
+    }
+
+    public function testSearchPaginatesWithOffset(): void
+    {
+        for ($i = 1; $i <= 7; $i++) {
+            $this->repo->create($this->anaId, $this->input(
+                date: sprintf('2026-07-%02d', $i),
+                description: "tx{$i}",
+            ));
+        }
+
+        $filter = \App\Models\TransactionFilter::fromQuery(['page' => '2']);
+        $pageTwo = $this->repo->search($this->anaId, $filter, perPage: 3, page: $filter->page);
+
+        $this->assertSame(['tx4', 'tx3', 'tx2'], array_map(fn ($t) => $t->description, $pageTwo));
+        $this->assertSame(7, $this->repo->countFor($this->anaId, $filter));
+    }
+
+    private function insertIncomeCategory(int $userId, string $name): int
+    {
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO categories (user_id, name, type, created_at) VALUES (?, ?, 'income', 'x')"
+        );
+        $stmt->execute([$userId, $name]);
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
     private function input(
         int $amountCents = 1000,
         string $description = 'Compra',

@@ -52,6 +52,14 @@ final class Request
         return new self($method, $normalized === '' ? '/' : $normalized, $query, $body, $ip);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function queryAll(): array
+    {
+        return $this->query;
+    }
+
     public function query(string $key, string $default = ''): string
     {
         $value = $this->query[$key] ?? null;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Models\Transaction;
+use App\Models\TransactionFilter;
 use App\Models\TransactionInput;
 use PDO;
 
@@ -38,6 +39,68 @@ final class TransactionRepository
         $stmt->execute();
 
         return array_map(Transaction::fromRow(...), $stmt->fetchAll());
+    }
+
+    /** sort keys come from TransactionFilter's whitelist — never raw user input */
+    private const SORT_COLUMNS = ['date' => 't.date', 'amount' => 't.amount_cents'];
+
+    /**
+     * @return list<Transaction>
+     */
+    public function search(int $userId, TransactionFilter $filter, int $perPage, int $page): array
+    {
+        [$where, $params] = self::whereAndParams($userId, $filter);
+        $orderColumn = self::SORT_COLUMNS[$filter->sort];
+        $direction = $filter->direction === 'asc' ? 'ASC' : 'DESC';
+
+        $stmt = $this->pdo->prepare(
+            self::SELECT . " WHERE {$where} ORDER BY {$orderColumn} {$direction}, t.id DESC LIMIT ? OFFSET ?"
+        );
+        $stmt->execute([...$params, $perPage, ($page - 1) * $perPage]);
+
+        return array_map(Transaction::fromRow(...), $stmt->fetchAll());
+    }
+
+    public function countFor(int $userId, TransactionFilter $filter): int
+    {
+        [$where, $params] = self::whereAndParams($userId, $filter);
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM transactions t WHERE {$where}");
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @return array{string, list<int|string>}
+     */
+    private static function whereAndParams(int $userId, TransactionFilter $filter): array
+    {
+        $where = ['t.user_id = ?'];
+        $params = [$userId];
+
+        if ($filter->dateFrom !== null) {
+            $where[] = 't.date >= ?';
+            $params[] = $filter->dateFrom;
+        }
+        if ($filter->dateTo !== null) {
+            $where[] = 't.date <= ?';
+            $params[] = $filter->dateTo;
+        }
+        if ($filter->categoryId !== null) {
+            $where[] = 't.category_id = ?';
+            $params[] = $filter->categoryId;
+        }
+        if ($filter->type !== null) {
+            $where[] = 't.type = ?';
+            $params[] = $filter->type->value;
+        }
+        if ($filter->search !== null) {
+            $where[] = "t.description LIKE ? ESCAPE '\\'";
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $filter->search);
+            $params[] = '%' . $escaped . '%';
+        }
+
+        return [implode(' AND ', $where), $params];
     }
 
     public function find(int $userId, int $id): ?Transaction
