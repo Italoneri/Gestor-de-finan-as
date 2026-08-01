@@ -2,9 +2,9 @@
 
 <div align="center">
 
-# Personal Finance Tracker
+# Fluxo
 
-**Multi-user finance manager in vanilla PHP — with the entire authentication stack built from scratch, from password hashing to token rotation.**
+**Multi-user personal finance manager in vanilla PHP — with the entire authentication stack built from scratch, from password hashing to token rotation.**
 
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![Tests](https://img.shields.io/badge/Tests-177-brightgreen?style=flat-square)](#tests)

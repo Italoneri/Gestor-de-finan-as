@@ -83,6 +83,7 @@ if (!$auth->check() && isset($_COOKIE[RememberMeService::COOKIE_NAME])) {
 $view = new View(dirname(__DIR__) . '/src/Views');
 $view->share('csrfToken', $csrf->token());
 $view->share('userName', $auth->user()?->name);
+$view->share('currentPath', parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
 
 $authController = new AuthController($auth, $rememberMe, $view, $session, $secureCookies);
 $registration = new RegistrationController($auth, $verification, $mailer, $view, $session, $appUrl);

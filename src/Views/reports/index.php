@@ -11,21 +11,48 @@ use App\Models\Money;
     </form>
 </section>
 
+<?php $result = $incomeCents - $expenseCents; ?>
 <section class="stats-grid">
     <div class="card stat-card">
-        <span class="stat-label">Receitas</span>
-        <strong class="stat-value amount-income">R$ <?= e(Money::fromCents($incomeCents)->formatBr()) ?></strong>
+        <span class="stat-head">
+            <span class="stat-icon"><?= icon('trending-up') ?></span>
+            <span class="stat-label">Receitas</span>
+        </span>
+        <strong class="stat-value <?= $incomeCents > 0 ? 'amount-income' : '' ?>">
+            R$ <?= e(Money::fromCents($incomeCents)->formatBr()) ?>
+        </strong>
+        <?php if ($incomeCents === 0) : ?>
+            <span class="stat-empty">Nenhuma receita registrada neste mês</span>
+        <?php endif; ?>
     </div>
     <div class="card stat-card">
-        <span class="stat-label">Despesas</span>
-        <strong class="stat-value amount-expense">R$ <?= e(Money::fromCents($expenseCents)->formatBr()) ?></strong>
+        <span class="stat-head">
+            <span class="stat-icon"><?= icon('trending-down') ?></span>
+            <span class="stat-label">Despesas</span>
+        </span>
+        <strong class="stat-value <?= $expenseCents > 0 ? 'amount-expense' : '' ?>">
+            R$ <?= e(Money::fromCents($expenseCents)->formatBr()) ?>
+        </strong>
+        <?php if ($expenseCents === 0) : ?>
+            <span class="stat-empty">Nenhuma despesa registrada neste mês</span>
+        <?php endif; ?>
     </div>
     <div class="card stat-card">
-        <span class="stat-label">Resultado do mês</span>
-        <?php $result = $incomeCents - $expenseCents; ?>
-        <strong class="stat-value <?= $result >= 0 ? 'amount-income' : 'amount-expense' ?>">
+        <span class="stat-head">
+            <span class="stat-icon"><?= icon('wallet') ?></span>
+            <span class="stat-label">Resultado do mês</span>
+        </span>
+        <?php $resultClass = match (true) {
+            $result > 0 => 'amount-income',
+            $result < 0 => 'amount-expense',
+            default => '',
+        }; ?>
+        <strong class="stat-value <?= e($resultClass) ?>">
             R$ <?= e(Money::fromCents($result)->formatBr()) ?>
         </strong>
+        <?php if ($incomeCents === 0 && $expenseCents === 0) : ?>
+            <span class="stat-empty">Sem movimentações neste mês</span>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -33,7 +60,10 @@ use App\Models\Money;
     <section class="card">
         <h2>Receitas por categoria</h2>
         <?php if ($incomeByCategory === []) : ?>
-            <p class="muted">Sem receitas neste mês.</p>
+            <div class="empty-state">
+                <?= icon('trending-up') ?>
+                <p>Nenhuma receita registrada neste mês.</p>
+            </div>
         <?php else : ?>
             <table class="table">
                 <tbody>
@@ -50,7 +80,10 @@ use App\Models\Money;
     <section class="card">
         <h2>Despesas por categoria</h2>
         <?php if ($expensesByCategory === []) : ?>
-            <p class="muted">Sem despesas neste mês.</p>
+            <div class="empty-state">
+                <?= icon('trending-down') ?>
+                <p>Nenhuma despesa registrada neste mês.</p>
+            </div>
         <?php else : ?>
             <table class="table">
                 <tbody>
@@ -69,7 +102,11 @@ use App\Models\Money;
 <section class="card">
     <h2>Metas do mês</h2>
     <?php if ($budgets === []) : ?>
-        <p class="muted">Nenhuma meta para este mês. <a href="/budgets?month=<?= e($month) ?>">Criar metas</a></p>
+        <div class="empty-state">
+            <?= icon('target') ?>
+            <p>Nenhuma meta definida para este mês.</p>
+            <p><a href="/budgets?month=<?= e($month) ?>">Criar metas</a></p>
+        </div>
     <?php else : ?>
         <?php foreach ($budgets as $item) : ?>
             <div class="budget-row">

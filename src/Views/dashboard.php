@@ -3,6 +3,12 @@
 use App\Models\CategoryType;
 use App\Models\Money;
 
+$amountClass = static fn (int $cents): string => match (true) {
+    $cents > 0 => 'amount-income',
+    $cents < 0 => 'amount-expense',
+    default => '',
+};
+
 ?>
 <section class="page-head">
     <h1>Painel — <?= e(br_month($month)) ?></h1>
@@ -10,18 +16,40 @@ use App\Models\Money;
 
 <section class="stats-grid">
     <div class="card stat-card">
-        <span class="stat-label">Saldo atual</span>
-        <strong class="stat-value <?= $balanceCents >= 0 ? 'amount-income' : 'amount-expense' ?>">
+        <span class="stat-head">
+            <span class="stat-icon"><?= icon('wallet') ?></span>
+            <span class="stat-label">Saldo atual</span>
+        </span>
+        <strong class="stat-value <?= e($amountClass($balanceCents)) ?>">
             R$ <?= e(Money::fromCents($balanceCents)->formatBr()) ?>
         </strong>
+        <?php if ($balanceCents === 0) : ?>
+            <span class="stat-empty">Sem movimentações registradas até agora</span>
+        <?php endif; ?>
     </div>
     <div class="card stat-card">
-        <span class="stat-label">Receitas do mês</span>
-        <strong class="stat-value amount-income">R$ <?= e(Money::fromCents($incomeCents)->formatBr()) ?></strong>
+        <span class="stat-head">
+            <span class="stat-icon"><?= icon('trending-up') ?></span>
+            <span class="stat-label">Receitas do mês</span>
+        </span>
+        <strong class="stat-value <?= $incomeCents > 0 ? 'amount-income' : '' ?>">
+            R$ <?= e(Money::fromCents($incomeCents)->formatBr()) ?>
+        </strong>
+        <?php if ($incomeCents === 0) : ?>
+            <span class="stat-empty">Nenhuma receita registrada este mês</span>
+        <?php endif; ?>
     </div>
     <div class="card stat-card">
-        <span class="stat-label">Despesas do mês</span>
-        <strong class="stat-value amount-expense">R$ <?= e(Money::fromCents($expenseCents)->formatBr()) ?></strong>
+        <span class="stat-head">
+            <span class="stat-icon"><?= icon('trending-down') ?></span>
+            <span class="stat-label">Despesas do mês</span>
+        </span>
+        <strong class="stat-value <?= $expenseCents > 0 ? 'amount-expense' : '' ?>">
+            R$ <?= e(Money::fromCents($expenseCents)->formatBr()) ?>
+        </strong>
+        <?php if ($expenseCents === 0) : ?>
+            <span class="stat-empty">Nenhuma despesa registrada este mês</span>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -29,7 +57,11 @@ use App\Models\Money;
     <section class="card">
         <h2>Despesas por categoria</h2>
         <?php if ($expensesByCategory === []) : ?>
-            <p class="muted">Sem despesas neste mês.</p>
+            <div class="empty-state">
+                <?= icon('inbox') ?>
+                <p>Nenhuma despesa registrada este mês.</p>
+                <p><a href="/transactions">Adicionar lançamento</a></p>
+            </div>
         <?php else : ?>
             <div class="chart-wrap">
                 <canvas id="expensesChart" role="img" aria-label="Despesas por categoria no mês"></canvas>
@@ -39,7 +71,11 @@ use App\Models\Money;
     <section class="card">
         <h2>Metas do mês</h2>
         <?php if ($budgets === []) : ?>
-            <p class="muted">Nenhuma meta definida. <a href="/budgets">Criar metas</a></p>
+            <div class="empty-state">
+                <?= icon('target') ?>
+                <p>Nenhuma meta definida para este mês.</p>
+                <p><a href="/budgets">Criar metas</a></p>
+            </div>
         <?php else : ?>
             <?php foreach ($budgets as $item) : ?>
                 <div class="budget-row">
@@ -63,7 +99,11 @@ use App\Models\Money;
 <section class="card list-card">
     <h2>Últimos lançamentos</h2>
     <?php if ($recent === []) : ?>
-        <p class="muted">Nenhum lançamento ainda. <a href="/transactions">Adicionar</a></p>
+        <div class="empty-state">
+            <?= icon('receipt') ?>
+            <p>Nenhum lançamento ainda.</p>
+            <p><a href="/transactions">Adicionar o primeiro</a></p>
+        </div>
     <?php else : ?>
         <div class="table-wrap">
             <table class="table">
@@ -98,39 +138,48 @@ use App\Models\Money;
             crossorigin="anonymous"></script>
     <script>
         const chartData = <?= json_encode($chartData, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+        const palette = [
+            '#0f766e', '#0891b2', '#6366f1', '#a855f7',
+            '#ec4899', '#f59e0b', '#84cc16', '#14b8a6'
+        ];
+        const brl = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const total = chartData.values.reduce((sum, value) => sum + value, 0);
+
+        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+
         new Chart(document.getElementById('expensesChart'), {
-            type: 'bar',
+            type: 'doughnut',
             data: {
                 labels: chartData.labels,
                 datasets: [{
                     data: chartData.values,
-                    backgroundColor: '#2563eb',
-                    borderRadius: 4,
-                    barThickness: 18
+                    backgroundColor: chartData.values.map((_, i) => palette[i % palette.length]),
+                    borderWidth: 0,
+                    hoverOffset: 6
                 }]
             },
             options: {
-                indexAxis: 'y',
+                cutout: '62%',
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#64748b',
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 14
+                        }
+                    },
                     tooltip: {
                         callbacks: {
-                            label: (c) => c.parsed.x.toLocaleString('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL'
-                            })
+                            label: (c) => {
+                                const share = total > 0 ? Math.round((c.parsed / total) * 100) : 0;
+                                return ` ${brl(c.parsed)} (${share}%)`;
+                            }
                         }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(0, 0, 0, 0.06)' },
-                        ticks: { color: '#6b7280', callback: (v) => v.toLocaleString('pt-BR') }
-                    },
-                    y: {
-                        grid: { display: false },
-                        ticks: { color: '#1f2933' }
                     }
                 }
             }

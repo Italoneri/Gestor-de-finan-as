@@ -48,7 +48,10 @@ foreach ($categories as $category) {
     <section class="card list-card">
         <h2><?= e($type === CategoryType::Income ? 'Receitas' : 'Despesas') ?></h2>
         <?php if ($byType[$type->value] === []) : ?>
-            <p class="muted">Nenhuma categoria de <?= e(mb_strtolower($type->label())) ?> ainda.</p>
+            <div class="empty-state">
+                <?= icon($type === CategoryType::Income ? 'trending-up' : 'trending-down') ?>
+                <p>Nenhuma categoria de <?= e(mb_strtolower($type->label())) ?> ainda.</p>
+            </div>
         <?php else : ?>
             <table class="table">
                 <tbody>

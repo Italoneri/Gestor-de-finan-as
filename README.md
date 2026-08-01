@@ -2,9 +2,9 @@
 
 <div align="center">
 
-# Controle Financeiro Pessoal
+# Fluxo
 
-**Gestor de finanças multiusuário em PHP puro — com a autenticação inteira implementada do zero, do hash da senha à rotação de token.**
+**Gestor de finanças pessoais multiusuário em PHP puro — com a autenticação inteira implementada do zero, do hash da senha à rotação de token.**
 
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/)
 [![Tests](https://img.shields.io/badge/Tests-177-brightgreen?style=flat-square)](#testes)

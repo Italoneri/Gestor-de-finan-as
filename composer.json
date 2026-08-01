@@ -1,6 +1,6 @@
 {
     "name": "perdido/personal-finance",
-    "description": "Personal finance tracker with hand-rolled secure authentication (PHP, no framework)",
+    "description": "Fluxo — personal finance tracker with hand-rolled secure authentication (PHP, no framework)",
     "type": "project",
     "license": "MIT",
     "require": {
