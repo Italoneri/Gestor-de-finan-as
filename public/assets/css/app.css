@@ -273,3 +273,31 @@ select {
 .btn-link.danger {
     color: var(--danger);
 }
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+.table .num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.amount-income {
+    color: #15803d;
+    font-weight: 600;
+}
+
+.amount-expense {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+input[type="date"] {
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+}

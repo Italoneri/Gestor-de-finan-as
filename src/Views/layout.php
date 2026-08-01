@@ -13,6 +13,7 @@
             <?php if (!empty($userName)) : ?>
                 <nav class="topbar-nav" aria-label="Principal">
                     <a href="/">Painel</a>
+                    <a href="/transactions">Transações</a>
                     <a href="/categories">Categorias</a>
                     <a href="/accounts">Contas</a>
                     <span class="muted"><?= e($userName) ?></span>

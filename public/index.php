@@ -7,6 +7,7 @@ use App\Controllers\AuthController;
 use App\Controllers\CategoryController;
 use App\Controllers\PasswordResetController;
 use App\Controllers\RegistrationController;
+use App\Controllers\TransactionController;
 use App\Core\Config;
 use App\Core\Csrf;
 use App\Core\Database;
@@ -18,6 +19,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Repositories\AccountRepository;
 use App\Repositories\CategoryRepository;
+use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\EmailVerificationService;
@@ -89,8 +91,18 @@ $view->share('userName', $auth->user()?->name);
 $authController = new AuthController($auth, $rememberMe, $view, $session, $secureCookies);
 $registration = new RegistrationController($auth, $verification, $mailer, $view, $session, $appUrl);
 $passwordReset = new PasswordResetController($resets, $mailer, $view, $session, $appUrl);
-$categoryCtrl = new CategoryController(new CategoryRepository($pdo), $auth, $view, $session);
-$accountCtrl = new AccountController(new AccountRepository($pdo), $auth, $view, $session);
+$categoryRepo = new CategoryRepository($pdo);
+$accountRepo = new AccountRepository($pdo);
+$categoryCtrl = new CategoryController($categoryRepo, $auth, $view, $session);
+$accountCtrl = new AccountController($accountRepo, $auth, $view, $session);
+$transactionCtrl = new TransactionController(
+    new TransactionRepository($pdo),
+    $categoryRepo,
+    $accountRepo,
+    $auth,
+    $view,
+    $session,
+);
 
 $router = new Router();
 
@@ -157,6 +169,24 @@ $router->post('/accounts/{id}', Middleware::auth($auth, Middleware::csrf(
 $router->post('/accounts/{id}/delete', Middleware::auth($auth, Middleware::csrf(
     $csrf,
     fn (Request $r, array $p): Response => $accountCtrl->destroy((int) $p['id']),
+)));
+
+$router->get('/transactions', Middleware::auth($auth, fn (): Response => $transactionCtrl->index()));
+$router->post('/transactions', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r): Response => $transactionCtrl->store($r),
+)));
+$router->get('/transactions/{id}/edit', Middleware::auth(
+    $auth,
+    fn (Request $r, array $p): Response => $transactionCtrl->edit((int) $p['id']),
+));
+$router->post('/transactions/{id}', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r, array $p): Response => $transactionCtrl->update($r, (int) $p['id']),
+)));
+$router->post('/transactions/{id}/delete', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r, array $p): Response => $transactionCtrl->destroy((int) $p['id']),
 )));
 
 $router->dispatch(Request::fromGlobals())->send();

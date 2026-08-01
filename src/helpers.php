@@ -12,6 +12,14 @@ function e(?string $value): string
 }
 
 /**
+ * ISO date (Y-m-d) to Brazilian display format (d/m/Y).
+ */
+function br_date(string $isoDate): string
+{
+    return implode('/', array_reverse(explode('-', $isoDate)));
+}
+
+/**
  * Hidden CSRF input for state-changing forms. The field name must match
  * what the csrf middleware reads (App\Core\Csrf::FIELD).
  */
