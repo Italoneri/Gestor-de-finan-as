@@ -36,12 +36,14 @@ $isCurrent = fn (string $href): bool => $href === '/'
                            class="<?= $isCurrent($href) ? 'active' : '' ?>"
                             <?= $isCurrent($href) ? 'aria-current="page"' : '' ?>><?= e($label) ?></a>
                     <?php endforeach; ?>
-                    <span class="muted"><?= e($userName) ?></span>
+                </nav>
+                <div class="topbar-user">
+                    <span class="topbar-username"><?= e($userName) ?></span>
                     <form method="post" action="/logout">
                         <?= csrf_field($csrfToken) ?>
-                        <button type="submit" class="btn-link">Sair</button>
+                        <button type="submit" class="btn-ghost">Sair</button>
                     </form>
-                </nav>
+                </div>
             <?php endif; ?>
         </div>
     </header>
