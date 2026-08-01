@@ -57,6 +57,31 @@ final class MigratorTest extends TestCase
         );
     }
 
+    public function testRollsBackFailedMigrationWithoutRecordingIt(): void
+    {
+        $dir = sys_get_temp_dir() . '/migrator-test-' . uniqid();
+        mkdir($dir);
+        file_put_contents($dir . '/001_ok.sql', 'CREATE TABLE ok_table (id INTEGER PRIMARY KEY);');
+        file_put_contents($dir . '/002_broken.sql', 'CREATE TABLE broken (id INTEGER PRIMARY KEY); SYNTAX ERROR;');
+        $pdo = $this->freshConnection();
+
+        try {
+            $this->expectException(\RuntimeException::class);
+            Migrator::run($pdo, $dir);
+        } finally {
+            $applied = $pdo->query('SELECT filename FROM migrations')->fetchAll(PDO::FETCH_COLUMN);
+            $this->assertSame(['001_ok.sql'], $applied);
+
+            $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type = 'table'")
+                ->fetchAll(PDO::FETCH_COLUMN);
+            $this->assertNotContains('broken', $tables);
+
+            @unlink($dir . '/001_ok.sql');
+            @unlink($dir . '/002_broken.sql');
+            @rmdir($dir);
+        }
+    }
+
     private function freshConnection(): PDO
     {
         $pdo = new PDO('sqlite::memory:');
