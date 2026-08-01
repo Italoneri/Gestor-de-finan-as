@@ -12,6 +12,28 @@ function e(?string $value): string
 }
 
 /**
+ * Validates a YYYY-MM month string; null when malformed (parse, don't trust).
+ */
+function valid_month(string $value): ?string
+{
+    return preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $value) === 1 ? $value : null;
+}
+
+/**
+ * YYYY-MM to Brazilian display ("Julho/2026").
+ */
+function br_month(string $month): string
+{
+    $names = [
+        1 => 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+    ];
+    [$year, $monthNumber] = explode('-', $month);
+
+    return $names[(int) $monthNumber] . '/' . $year;
+}
+
+/**
  * ISO date (Y-m-d) to Brazilian display format (d/m/Y).
  */
 function br_date(string $isoDate): string

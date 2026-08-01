@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 use App\Controllers\AccountController;
 use App\Controllers\AuthController;
+use App\Controllers\BudgetController;
 use App\Controllers\CategoryController;
+use App\Controllers\DashboardController;
+use App\Controllers\ReportController;
 use App\Controllers\PasswordResetController;
 use App\Controllers\RegistrationController;
 use App\Controllers\TransactionController;
@@ -18,6 +21,7 @@ use App\Core\Router;
 use App\Core\Session;
 use App\Core\View;
 use App\Repositories\AccountRepository;
+use App\Repositories\BudgetRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
@@ -25,6 +29,7 @@ use App\Services\AuthService;
 use App\Services\EmailVerificationService;
 use App\Services\LoginRateLimiter;
 use App\Services\LogMailer;
+use App\Services\ReportService;
 use App\Services\PasswordResetService;
 use App\Services\RememberMeCookie;
 use App\Services\RememberMeService;
@@ -95,20 +100,23 @@ $categoryRepo = new CategoryRepository($pdo);
 $accountRepo = new AccountRepository($pdo);
 $categoryCtrl = new CategoryController($categoryRepo, $auth, $view, $session);
 $accountCtrl = new AccountController($accountRepo, $auth, $view, $session);
+$transactionRepo = new TransactionRepository($pdo);
 $transactionCtrl = new TransactionController(
-    new TransactionRepository($pdo),
+    $transactionRepo,
     $categoryRepo,
     $accountRepo,
     $auth,
     $view,
     $session,
 );
+$reportService = new ReportService($pdo);
+$dashboardCtrl = new DashboardController($reportService, $transactionRepo, $auth, $view);
+$reportCtrl = new ReportController($reportService, $auth, $view);
+$budgetCtrl = new BudgetController(new BudgetRepository($pdo), $categoryRepo, $auth, $view, $session);
 
 $router = new Router();
 
-$router->get('/', Middleware::auth($auth, fn (): Response => $view->render('home', [
-    'title' => 'Painel',
-])));
+$router->get('/', Middleware::auth($auth, fn (): Response => $dashboardCtrl->index()));
 
 $router->get('/register', Middleware::guest($auth, fn (): Response => $registration->showRegister()));
 $router->post('/register', Middleware::csrf($csrf, fn (Request $r): Response => $registration->register($r)));
@@ -187,6 +195,18 @@ $router->post('/transactions/{id}', Middleware::auth($auth, Middleware::csrf(
 $router->post('/transactions/{id}/delete', Middleware::auth($auth, Middleware::csrf(
     $csrf,
     fn (Request $r, array $p): Response => $transactionCtrl->destroy((int) $p['id']),
+)));
+
+$router->get('/reports', Middleware::auth($auth, fn (Request $r): Response => $reportCtrl->index($r)));
+
+$router->get('/budgets', Middleware::auth($auth, fn (Request $r): Response => $budgetCtrl->index($r)));
+$router->post('/budgets', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r): Response => $budgetCtrl->store($r),
+)));
+$router->post('/budgets/{id}/delete', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r, array $p): Response => $budgetCtrl->destroy($r, (int) $p['id']),
 )));
 
 $router->dispatch(Request::fromGlobals())->send();
