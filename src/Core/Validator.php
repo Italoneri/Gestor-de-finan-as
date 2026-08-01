@@ -89,6 +89,29 @@ final class Validator
         }
     }
 
+    public function date(string $field, string $value): void
+    {
+        $valid = preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
+        if ($valid) {
+            [$year, $month, $day] = array_map(intval(...), explode('-', $value));
+            $valid = checkdate($month, $day, $year);
+        }
+        if (!$valid) {
+            $this->errors[$field] = 'Informe uma data válida.';
+        }
+    }
+
+    /**
+     * Free text, but no control/invisible characters (\p{C}): newlines and
+     * zero-width tricks stay out while punctuation stays allowed.
+     */
+    public function description(string $field, string $value): void
+    {
+        if (preg_match('/^[^\p{C}]{2,100}$/u', $value) !== 1) {
+            $this->errors[$field] = 'Descrição deve ter de 2 a 100 caracteres, sem quebras de linha.';
+        }
+    }
+
     public function confirmation(string $field, string $password, string $confirmation): void
     {
         if (!hash_equals($password, $confirmation)) {

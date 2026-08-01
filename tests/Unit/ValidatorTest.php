@@ -194,6 +194,67 @@ final class ValidatorTest extends TestCase
         $this->assertNotNull($validator->error('name'));
     }
 
+    public function testAcceptsRealDates(): void
+    {
+        $validator = new Validator();
+        $validator->date('date', '2026-02-28');
+
+        $this->assertFalse($validator->fails());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidDates(): array
+    {
+        return [
+            'empty' => [''],
+            'wrong format' => ['28/02/2026'],
+            'nonexistent day' => ['2026-02-30'],
+            'nonexistent month' => ['2026-13-01'],
+            'garbage' => ['ontem'],
+        ];
+    }
+
+    #[DataProvider('invalidDates')]
+    public function testRejectsInvalidDates(string $date): void
+    {
+        $validator = new Validator();
+        $validator->date('date', $date);
+
+        $this->assertNotNull($validator->error('date'));
+    }
+
+    public function testAcceptsFreeTextDescriptions(): void
+    {
+        $validator = new Validator();
+        $validator->description('description', 'Compras no mercado (cartão), 2x sem juros');
+
+        $this->assertFalse($validator->fails());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidDescriptions(): array
+    {
+        return [
+            'empty' => [''],
+            'single char' => ['x'],
+            'too long' => [str_repeat('a', 101)],
+            'control chars' => ["linha\numa"],
+        ];
+    }
+
+    #[DataProvider('invalidDescriptions')]
+    public function testRejectsInvalidDescriptions(string $description): void
+    {
+        $validator = new Validator();
+        $validator->description('description', $description);
+
+        $this->assertNotNull($validator->error('description'));
+    }
+
     public function testRejectsMismatchedConfirmation(): void
     {
         $validator = new Validator();
