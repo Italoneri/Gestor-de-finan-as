@@ -138,12 +138,19 @@ $amountClass = static fn (int $cents): string => match (true) {
             crossorigin="anonymous"></script>
     <script>
         const chartData = <?= json_encode($chartData, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+
+        // cool family around the brand blue — a single hue would make slices indistinguishable
         const palette = [
-            '#0f766e', '#0891b2', '#6366f1', '#a855f7',
-            '#ec4899', '#f59e0b', '#84cc16', '#14b8a6'
+            '#38bdf8', '#60a5fa', '#818cf8', '#22d3ee',
+            '#7dd3fc', '#a78bfa', '#2dd4bf', '#a5b4fc'
         ];
         const brl = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const total = chartData.values.reduce((sum, value) => sum + value, 0);
+
+        // chart chrome reads the theme tokens instead of repeating hex values here
+        const token = (name) => getComputedStyle(document.documentElement)
+            .getPropertyValue(name)
+            .trim();
 
         Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
 
@@ -165,7 +172,7 @@ $amountClass = static fn (int $cents): string => match (true) {
                     legend: {
                         position: 'right',
                         labels: {
-                            color: '#64748b',
+                            color: token('--muted'),
                             boxWidth: 10,
                             boxHeight: 10,
                             usePointStyle: true,
