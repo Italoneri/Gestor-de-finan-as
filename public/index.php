@@ -46,21 +46,7 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 $config = Config::load(dirname(__DIR__));
 
-error_reporting(E_ALL);
-ini_set('display_errors', '0');
-ini_set('log_errors', '1');
-
-set_exception_handler(function (Throwable $e) use ($config): void {
-    error_log((string) $e);
-    http_response_code(500);
-    if ($config->bool('APP_DEBUG')) {
-        header('Content-Type: text/plain; charset=utf-8');
-        echo $e;
-
-        return;
-    }
-    echo 'Algo deu errado. Tente novamente mais tarde.';
-});
+App\Core\ErrorHandler::register($config);
 
 $secureCookies = $config->get('APP_ENV') === 'prod';
 $appUrl = $config->get('APP_URL', 'http://localhost:8000');
@@ -115,6 +101,9 @@ $reportCtrl = new ReportController($reportService, $auth, $view);
 $budgetCtrl = new BudgetController(new BudgetRepository($pdo), $categoryRepo, $auth, $view, $session);
 
 $router = new Router();
+$router->setNotFound(fn (Request $r): Response => $view->render('errors/404', [
+    'title' => 'Página não encontrada',
+], 404));
 
 $router->get('/', Middleware::auth($auth, fn (): Response => $dashboardCtrl->index()));
 

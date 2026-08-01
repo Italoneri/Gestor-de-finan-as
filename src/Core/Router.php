@@ -11,6 +11,14 @@ final class Router
      */
     private array $routes = ['GET' => [], 'POST' => []];
 
+    /** @var ?callable */
+    private $notFound = null;
+
+    public function setNotFound(callable $handler): void
+    {
+        $this->notFound = $handler;
+    }
+
     public function get(string $pattern, callable $handler): void
     {
         $this->add('GET', $pattern, $handler);
@@ -32,7 +40,9 @@ final class Router
             return ($route['handler'])($request, $params);
         }
 
-        return Response::html('<h1>404 — Página não encontrada</h1>', 404);
+        return $this->notFound !== null
+            ? ($this->notFound)($request)
+            : Response::html('<h1>404 — Página não encontrada</h1>', 404);
     }
 
     private function add(string $method, string $pattern, callable $handler): void

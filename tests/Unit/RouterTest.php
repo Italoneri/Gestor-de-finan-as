@@ -44,6 +44,17 @@ final class RouterTest extends TestCase
         $this->assertSame(404, $response->status);
     }
 
+    public function testUsesCustomNotFoundHandlerWhenSet(): void
+    {
+        $router = new Router();
+        $router->setNotFound(fn (Request $request): Response => Response::html('404 bonita', 404));
+
+        $response = $router->dispatch(Request::create('GET', '/nada'));
+
+        $this->assertSame(404, $response->status);
+        $this->assertSame('404 bonita', $response->body);
+    }
+
     public function testDistinguishesMethods(): void
     {
         $router = new Router();
