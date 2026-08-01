@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:80"
+    volumes:
+      - finance-storage:/var/www/html/storage
+
+volumes:
+  finance-storage:

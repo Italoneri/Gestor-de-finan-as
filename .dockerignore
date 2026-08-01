@@ -1,0 +1,8 @@
+.git
+vendor
+database/*.sqlite
+storage/*.log
+.env
+.phpunit.cache
+Dockerfile
+docker-compose.yml
