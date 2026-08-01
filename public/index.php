@@ -48,6 +48,11 @@ $config = Config::load(dirname(__DIR__));
 
 App\Core\ErrorHandler::register($config);
 
+// baseline security headers on every response
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+
 $secureCookies = $config->get('APP_ENV') === 'prod';
 $appUrl = $config->get('APP_URL', 'http://localhost:8000');
 
