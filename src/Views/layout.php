@@ -12,6 +12,10 @@ $isCurrent = fn (string $href): bool => $href === '/'
     ? ($currentPath ?? '/') === '/'
     : str_starts_with($currentPath ?? '/', $href);
 
+// the stylesheet ships without cache validators, so its mtime busts stale copies
+$stylesheet = '/assets/css/app.css';
+$stylesheetMtime = @filemtime(dirname(__DIR__, 2) . '/public' . $stylesheet);
+
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -23,7 +27,8 @@ $isCurrent = fn (string $href): bool => $href === '/'
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="/assets/css/app.css">
+    <link rel="stylesheet"
+          href="<?= e($stylesheet) ?><?= $stylesheetMtime !== false ? '?v=' . $stylesheetMtime : '' ?>">
 </head>
 <body>
     <header class="topbar">
