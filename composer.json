@@ -26,6 +26,10 @@
     "scripts": {
         "test": "phpunit",
         "lint": "phpcs",
+        "check": [
+            "@test",
+            "@lint"
+        ],
         "migrate": "php database/migrate.php",
         "seed": "php database/seed.php",
         "serve": "php -S localhost:8000 -t public public/index.php"
