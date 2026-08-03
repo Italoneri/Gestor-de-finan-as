@@ -139,28 +139,29 @@ $amountClass = static fn (int $cents): string => match (true) {
     <script>
         const chartData = <?= json_encode($chartData, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
-        // cool family around the brand blue — a single hue would make slices indistinguishable
-        const palette = [
-            '#38bdf8', '#60a5fa', '#818cf8', '#22d3ee',
-            '#7dd3fc', '#a78bfa', '#2dd4bf', '#a5b4fc'
-        ];
         const brl = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const total = chartData.values.reduce((sum, value) => sum + value, 0);
 
-        // chart chrome reads the theme tokens instead of repeating hex values here
+        // slice and chrome colours read the theme tokens instead of repeating hex values here
         const token = (name) => getComputedStyle(document.documentElement)
             .getPropertyValue(name)
             .trim();
 
+        const sliceColors = () => {
+            const palette = token('--chart-palette').split(',').map((color) => color.trim());
+
+            return chartData.values.map((_, index) => palette[index % palette.length]);
+        };
+
         Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
 
-        new Chart(document.getElementById('expensesChart'), {
+        const chart = new Chart(document.getElementById('expensesChart'), {
             type: 'doughnut',
             data: {
                 labels: chartData.labels,
                 datasets: [{
                     data: chartData.values,
-                    backgroundColor: chartData.values.map((_, i) => palette[i % palette.length]),
+                    backgroundColor: sliceColors(),
                     borderWidth: 0,
                     hoverOffset: 6
                 }]
@@ -190,6 +191,13 @@ $amountClass = static fn (int $cents): string => match (true) {
                     }
                 }
             }
+        });
+
+        // the canvas is painted, not styled — it has to be repainted by hand on a theme switch
+        document.addEventListener('themechange', () => {
+            chart.data.datasets[0].backgroundColor = sliceColors();
+            chart.options.plugins.legend.labels.color = token('--muted');
+            chart.update();
         });
     </script>
 <?php endif; ?>

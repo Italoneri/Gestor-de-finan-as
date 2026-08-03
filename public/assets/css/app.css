@@ -1,4 +1,12 @@
+/*
+ * Dark is the default palette; :root[data-theme="light"] below overrides the
+ * tokens rather than the rules, so every component is themed in one place.
+ * The html tag is stamped server-side from the theme cookie — see App\Core\Theme.
+ */
 :root {
+    /* native date, month and select widgets follow the theme */
+    color-scheme: dark;
+
     /* brand */
     --primary: #38bdf8;
     --primary-hover: #7dd3fc;
@@ -48,6 +56,55 @@
     --radius-sm: 10px;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 4px 12px rgb(0 0 0 / 0.45);
+
+    /*
+     * Donut slices. A cool family around the accent rather than one hue, which
+     * would make neighbouring slices indistinguishable. Read by the dashboard
+     * script so the hex values are not duplicated in JS.
+     */
+    --chart-palette: #38bdf8, #60a5fa, #818cf8, #22d3ee, #7dd3fc, #a78bfa, #2dd4bf, #a5b4fc;
+}
+
+/*
+ * Light theme. Signed values and the accent all move to the 600–700 steps:
+ * the light steps that carry a near-black background measure under 2:1 on white.
+ */
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    --primary: #0369a1;
+    --primary-hover: #075985;
+    --primary-soft: rgb(2 132 199 / 0.1);
+    --primary-contrast: #ffffff;
+
+    --positive: #15803d;
+    --negative: #b91c1c;
+
+    --danger: #b91c1c;
+    --danger-bg: rgb(185 28 28 / 0.1);
+    --success: #15803d;
+    --success-bg: rgb(21 128 61 / 0.1);
+
+    /* depth comes back from shadow here, so raised surfaces stay white */
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --input-bg: #ffffff;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    --text: #0f172a;
+    --muted: #475569;
+    --text-dim: #64748b;
+
+    /* the overlays invert: translucent ink instead of translucent white */
+    --overlay-hover: rgb(15 23 42 / 0.05);
+    --overlay-active: rgb(15 23 42 / 0.09);
+
+    --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+    --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.05), 0 10px 20px -5px rgb(15 23 42 / 0.08);
+
+    --chart-palette: #0284c7, #4f46e5, #0891b2, #7c3aed, #0369a1, #2563eb, #0d9488, #6d28d9;
 }
 
 * {
@@ -61,9 +118,19 @@ body {
     color: var(--text);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+}
 
-    /* native date/month pickers, selects and scrollbars follow the theme */
-    color-scheme: dark;
+/* only the surfaces that repaint on a theme switch, so hover states stay snappy */
+@media (prefers-reduced-motion: no-preference) {
+    body,
+    .topbar,
+    .card,
+    .btn-ghost,
+    .theme-toggle,
+    input,
+    select {
+        transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
 }
 
 .icon {
@@ -138,6 +205,52 @@ body {
 .topbar-nav a.active {
     color: var(--primary);
     background: var(--primary-soft);
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--nav-item-h);
+    height: var(--nav-item-h);
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--overlay-hover);
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    background: var(--overlay-active);
+    color: var(--text);
+}
+
+.theme-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.theme-toggle .icon {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+/* the visible glyph names the theme the click switches to, matching the label */
+.theme-icon-sun,
+.theme-icon-moon {
+    display: none;
+}
+
+:root[data-theme="dark"] .theme-icon-sun,
+:root[data-theme="light"] .theme-icon-moon {
+    display: block;
 }
 
 .topbar-user {
