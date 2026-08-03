@@ -1,14 +1,101 @@
+/*
+ * Dark is the default palette; :root[data-theme="light"] below overrides the
+ * tokens rather than the rules, so every component is themed in one place.
+ * The html tag is stamped server-side from the theme cookie — see App\Core\Theme.
+ */
 :root {
-    --bg: #f6f7f9;
-    --surface: #ffffff;
-    --text: #1f2933;
-    --muted: #6b7280;
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
+    /* native date, month and select widgets follow the theme */
+    color-scheme: dark;
+
+    /* brand */
+    --primary: #38bdf8;
+    --primary-hover: #7dd3fc;
+    --primary-soft: rgb(56 189 248 / 0.12);
+    --primary-contrast: #0a0a0b;
+
+    /*
+     * Financial semantics — green and red stay reserved for signed values.
+     * Both read lighter than the light theme did: anything darker than the 400
+     * step loses contrast against a near-black surface.
+     */
+    --positive: #4ade80;
+    --negative: #f87171;
+
+    /*
+     * UI feedback (errors, destructive actions). Still a separate token from
+     * --negative so the two can diverge again, but on a dark surface they land
+     * on the same red — the darker error reds are unreadable here.
+     */
+    --danger: #f87171;
+    --danger-bg: rgb(248 113 113 / 0.12);
+    --success: #4ade80;
+    --success-bg: rgb(74 222 128 / 0.12);
+
+    /* surfaces — depth comes from stepping the surface up, not from shadow */
+    --bg: #0a0a0b;
+    --surface: #16161a;
+    --surface-raised: #1c1c22;
+    --input-bg: #101013;
+    --border: #26262d;
+    --border-strong: #35353f;
+
+    /* text */
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --text-dim: #71717a;
+
+    /* translucent white, for states that must work over any dark surface */
+    --overlay-hover: rgb(255 255 255 / 0.06);
+    --overlay-active: rgb(255 255 255 / 0.1);
+
+    /* every topbar item shares this height, so the active pill cannot grow the row */
+    --nav-item-h: 2.25rem;
+
+    /* shape */
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 12px rgb(0 0 0 / 0.45);
+}
+
+/*
+ * Light theme. Signed values and the accent all move to the 600–700 steps:
+ * the light steps that carry a near-black background measure under 2:1 on white.
+ */
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    --primary: #0369a1;
+    --primary-hover: #075985;
+    --primary-soft: rgb(2 132 199 / 0.1);
+    --primary-contrast: #ffffff;
+
+    --positive: #15803d;
+    --negative: #b91c1c;
+
     --danger: #b91c1c;
-    --danger-bg: #fee2e2;
-    --border: #d1d5db;
-    --radius: 10px;
+    --danger-bg: rgb(185 28 28 / 0.1);
+    --success: #15803d;
+    --success-bg: rgb(21 128 61 / 0.1);
+
+    /* depth comes back from shadow here, so raised surfaces stay white */
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --input-bg: #ffffff;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+
+    --text: #0f172a;
+    --muted: #475569;
+    --text-dim: #64748b;
+
+    /* the overlays invert: translucent ink instead of translucent white */
+    --overlay-hover: rgb(15 23 42 / 0.05);
+    --overlay-active: rgb(15 23 42 / 0.09);
+
+    --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+    --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.05), 0 10px 20px -5px rgb(15 23 42 / 0.08);
 }
 
 * {
@@ -17,55 +104,217 @@
 
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* only the surfaces that repaint on a theme switch, so hover states stay snappy */
+@media (prefers-reduced-motion: no-preference) {
+    body,
+    .topbar,
+    .card,
+    .btn-ghost,
+    .theme-toggle,
+    input,
+    select {
+        transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+}
+
+.icon {
+    width: 1em;
+    height: 1em;
+    display: block;
+    flex: none;
 }
 
 .topbar {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
+    color: var(--text);
 }
 
 .topbar-inner {
-    max-width: 960px;
+    max-width: 1040px;
     margin: 0 auto;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
 }
 
 .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--text);
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+    color: var(--primary);
     text-decoration: none;
+}
+
+.brand .icon {
+    width: 1.35rem;
+    height: 1.35rem;
+    color: var(--primary);
 }
 
 .topbar-nav {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.15rem;
+    flex-wrap: wrap;
+}
+
+.topbar-nav a,
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    height: var(--nav-item-h);
+    line-height: 1;
+    border-radius: 999px;
+}
+
+.topbar-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0 0.75rem;
+}
+
+.topbar-nav a:hover {
+    color: var(--text);
+    background: var(--overlay-hover);
+}
+
+.topbar-nav a.active {
+    color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--nav-item-h);
+    height: var(--nav-item-h);
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--overlay-hover);
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    background: var(--overlay-active);
+    color: var(--text);
+}
+
+.theme-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.theme-toggle .icon {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+/* the visible glyph names the theme the click switches to, matching the label */
+.theme-icon-sun,
+.theme-icon-moon {
+    display: none;
+}
+
+:root[data-theme="dark"] .theme-icon-sun,
+:root[data-theme="light"] .theme-icon-moon {
+    display: block;
+}
+
+.topbar-user {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-left: 1rem;
+}
+
+/* divider sized independently of the username's text box, so it stays centred */
+.topbar-user::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 1.5rem;
+    background: var(--border-strong);
+}
+
+.topbar-user form {
+    margin: 0;
+    display: flex;
+}
+
+.topbar-username {
+    color: var(--muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.btn-ghost {
+    padding: 0 0.9rem;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--overlay-hover);
+    border: 1px solid var(--border-strong);
+    cursor: pointer;
+}
+
+.btn-ghost:hover {
+    background: var(--overlay-active);
+    color: var(--text);
 }
 
 .container {
-    max-width: 960px;
+    max-width: 1040px;
     margin: 0 auto;
     padding: 2rem 1rem;
 }
 
 .card {
     background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 2rem;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-sm);
 }
 
 .auth-card {
     max-width: 420px;
     margin: 2rem auto;
+    padding: 2.25rem;
+}
+
+.auth-card h1 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
 }
 
 .muted {
@@ -79,19 +328,24 @@ body {
 label {
     display: block;
     font-weight: 600;
-    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    margin-bottom: 0.35rem;
 }
 
 input[type="text"],
 input[type="email"],
 input[type="password"] {
     width: 100%;
-    padding: 0.55rem 0.75rem;
+    padding: 0.6rem 0.8rem;
     font: inherit;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
     color: var(--text);
+}
+
+::placeholder {
+    color: var(--text-dim);
 }
 
 input:focus {
@@ -102,17 +356,18 @@ input:focus {
 
 .btn {
     display: inline-block;
-    padding: 0.6rem 1.25rem;
+    padding: 0.65rem 1.35rem;
     font: inherit;
     font-weight: 600;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
 }
 
+/* dark ink on the light blue: white here would land around 1.9:1 */
 .btn-primary {
     background: var(--primary);
-    color: #fff;
+    color: var(--primary-contrast);
     width: 100%;
 }
 
@@ -132,8 +387,9 @@ input:focus {
 
 .alert {
     padding: 0.75rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     margin-bottom: 1rem;
+    font-size: 0.9375rem;
 }
 
 .alert-error {
@@ -142,8 +398,8 @@ input:focus {
 }
 
 .alert-success {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--success-bg);
+    color: var(--success);
 }
 
 .checkbox-row {
@@ -178,22 +434,15 @@ a {
     color: var(--primary);
 }
 
-.topbar-nav a {
-    color: var(--text);
-    text-decoration: none;
-    font-size: 0.95rem;
-}
-
-.topbar-nav a:hover {
-    color: var(--primary);
-}
-
 .page-head {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
 }
 
 .page-head h1 {
     margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .form-card,
@@ -204,7 +453,7 @@ a {
 .form-card h2,
 .list-card h2 {
     margin-top: 0;
-    font-size: 1.1rem;
+    font-size: 1.0625rem;
 }
 
 .form-row {
@@ -224,16 +473,104 @@ a {
 }
 
 .form-row .btn {
-    margin-top: 1.55rem;
+    margin-top: 1.7rem;
+    width: auto;
 }
 
 select {
-    padding: 0.55rem 0.75rem;
+    padding: 0.6rem 0.8rem;
     font: inherit;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
     color: var(--text);
+}
+
+select:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+    border-color: var(--primary);
+}
+
+/* fieldset carries browser default chrome the other fields do not have */
+.color-field {
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.color-field legend {
+    padding: 0;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.35rem;
+}
+
+.swatches {
+    display: grid;
+    grid-template-columns: repeat(5, 1.5rem);
+    gap: 0.4rem;
+}
+
+.swatch {
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: var(--swatch);
+    cursor: pointer;
+
+    /* the ring sits outside the dot, so selection never resizes the grid */
+    box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.swatch:hover {
+    box-shadow: 0 0 0 2px var(--border-strong);
+}
+
+.swatch[aria-pressed="true"] {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--swatch);
+}
+
+.swatch:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+}
+
+.color-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.6rem 0 0;
+    font-weight: 400;
+    font-size: 0.8125rem;
+    color: var(--muted);
+}
+
+.color-custom input[type="color"] {
+    width: 2.25rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    cursor: pointer;
+}
+
+.category-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.color-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 999px;
+    background: var(--dot);
+    flex: none;
 }
 
 .table {
@@ -244,15 +581,21 @@ select {
 .table th {
     text-align: left;
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid var(--border);
 }
 
 .table td {
-    padding: 0.6rem 0.75rem;
+    padding: 0.7rem 0.75rem;
     border-bottom: 1px solid var(--border);
+}
+
+.table tbody tr:hover td {
+    background: var(--overlay-hover);
 }
 
 .table tr:last-child td {
@@ -281,72 +624,129 @@ select {
 .table .num {
     text-align: right;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 .amount-income {
-    color: #15803d;
+    color: var(--positive);
     font-weight: 600;
 }
 
 .amount-expense {
-    color: var(--danger);
+    color: var(--negative);
     font-weight: 600;
 }
 
 input[type="date"],
 input[type="month"] {
-    padding: 0.5rem 0.75rem;
+    padding: 0.55rem 0.8rem;
     font: inherit;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
     color: var(--text);
 }
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
 
 .stat-card {
-    padding: 1.25rem 1.5rem;
+    padding: 1.5rem 1.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.6rem;
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-head {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-sm);
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.stat-icon .icon {
+    width: 1.05rem;
+    height: 1.05rem;
 }
 
 .stat-label {
     color: var(--muted);
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
 }
 
 .stat-value {
-    font-size: 1.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-empty {
+    color: var(--muted);
+    font-size: 0.8125rem;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    text-align: center;
+    color: var(--muted);
+    padding: 2rem 1rem;
+}
+
+.empty-state .icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--text-dim);
+    margin-bottom: 0.15rem;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 0.9375rem;
 }
 
 .grid-2col {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
     margin-bottom: 1.5rem;
 }
 
 .grid-2col h2,
 .card h2 {
     margin-top: 0;
-    font-size: 1.1rem;
+    font-size: 1.0625rem;
 }
 
 .chart-wrap {
     position: relative;
-    height: 260px;
+    height: 300px;
 }
 
 .budget-row {
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
 }
 
 .budget-meta {
@@ -354,12 +754,12 @@ input[type="month"] {
     justify-content: space-between;
     gap: 1rem;
     font-size: 0.9rem;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.35rem;
 }
 
 .progress {
     height: 8px;
-    background: var(--bg);
+    background: var(--border);
     border-radius: 999px;
     overflow: hidden;
 }
@@ -371,7 +771,7 @@ input[type="month"] {
 }
 
 .progress-bar.over {
-    background: var(--danger);
+    background: var(--negative);
 }
 
 .report-head {
@@ -385,6 +785,10 @@ input[type="month"] {
 .month-picker {
     display: flex;
     gap: 0.5rem;
+}
+
+.month-picker .btn {
+    width: auto;
 }
 
 .list-head {
@@ -404,5 +808,5 @@ input[type="month"] {
 
 .filter-clear {
     align-self: center;
-    margin-top: 1.4rem;
+    margin-top: 1.55rem;
 }

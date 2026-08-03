@@ -10,6 +10,7 @@ final class CategoryTotal
         public readonly int $categoryId,
         public readonly string $name,
         public readonly int $totalCents,
+        public readonly string $color,
     ) {
     }
 

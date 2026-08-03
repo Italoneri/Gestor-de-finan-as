@@ -43,7 +43,11 @@ use App\Models\AccountType;
 <section class="card list-card">
     <h2>Suas contas</h2>
     <?php if ($accounts === []) : ?>
-        <p class="muted">Nenhuma conta cadastrada ainda.</p>
+        <div class="empty-state">
+            <?= icon('wallet') ?>
+            <p>Nenhuma conta cadastrada ainda.</p>
+            <p>Cadastre a primeira no formulário acima.</p>
+        </div>
     <?php else : ?>
         <table class="table">
             <thead>

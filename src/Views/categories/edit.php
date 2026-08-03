@@ -1,3 +1,4 @@
+<?php $color = $category->color; ?>
 <section class="card auth-card">
     <h1>Editar categoria</h1>
     <p class="muted">Tipo: <?= e($category->type->label()) ?> (o tipo não pode ser alterado)</p>
@@ -10,6 +11,7 @@
                 <p class="field-error"><?= e($errors['name']) ?></p>
             <?php endif; ?>
         </div>
+        <?php require __DIR__ . '/_color-field.php'; ?>
         <button type="submit" class="btn btn-primary">Salvar</button>
     </form>
     <p class="muted"><a href="/categories">Voltar</a></p>

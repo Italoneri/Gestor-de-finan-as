@@ -19,6 +19,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Router;
 use App\Core\Session;
+use App\Core\Theme;
 use App\Core\View;
 use App\Repositories\AccountRepository;
 use App\Repositories\BudgetRepository;
@@ -83,6 +84,8 @@ if (!$auth->check() && isset($_COOKIE[RememberMeService::COOKIE_NAME])) {
 $view = new View(dirname(__DIR__) . '/src/Views');
 $view->share('csrfToken', $csrf->token());
 $view->share('userName', $auth->user()?->name);
+$view->share('currentPath', parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
+$view->share('theme', Theme::fromCookie($_COOKIE[Theme::COOKIE_NAME] ?? null));
 
 $authController = new AuthController($auth, $rememberMe, $view, $session, $secureCookies);
 $registration = new RegistrationController($auth, $verification, $mailer, $view, $session, $appUrl);

@@ -100,7 +100,11 @@ $pageUrl = fn (int $n): string => '/transactions?' . http_build_query([...$filte
         <a href="<?= e($exportUrl) ?>">Exportar CSV</a>
     </div>
     <?php if ($transactions === []) : ?>
-        <p class="muted">Nenhum lançamento encontrado.</p>
+        <div class="empty-state">
+            <?= icon('receipt') ?>
+            <p>Nenhum lançamento encontrado.</p>
+            <p>Ajuste os filtros ou registre um novo lançamento acima.</p>
+        </div>
     <?php else : ?>
         <div class="table-wrap">
             <table class="table">

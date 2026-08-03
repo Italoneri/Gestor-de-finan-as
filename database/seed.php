@@ -46,18 +46,20 @@ foreach ([['Carteira', 'wallet'], ['Conta Corrente', 'checking'], ['Poupança', 
     $accountIds[$name] = (int) $pdo->lastInsertId();
 }
 
-$insertCategory = $pdo->prepare('INSERT INTO categories (user_id, name, type, created_at) VALUES (?, ?, ?, ?)');
+$insertCategory = $pdo->prepare(
+    'INSERT INTO categories (user_id, name, type, color, created_at) VALUES (?, ?, ?, ?, ?)'
+);
 $categoryIds = [];
 $categories = [
-    ['Salário', 'income'],
-    ['Freelance', 'income'],
-    ['Moradia', 'expense'],
-    ['Mercado', 'expense'],
-    ['Transporte', 'expense'],
-    ['Lazer', 'expense'],
+    ['Salário', 'income', '#22c55e'],
+    ['Freelance', 'income', '#14b8a6'],
+    ['Moradia', 'expense', '#6366f1'],
+    ['Mercado', 'expense', '#f97316'],
+    ['Transporte', 'expense', '#0ea5e9'],
+    ['Lazer', 'expense', '#f43f5e'],
 ];
-foreach ($categories as [$name, $type]) {
-    $insertCategory->execute([$userId, $name, $type, $now]);
+foreach ($categories as [$name, $type, $color]) {
+    $insertCategory->execute([$userId, $name, $type, $color, $now]);
     $categoryIds[$name] = (int) $pdo->lastInsertId();
 }
 

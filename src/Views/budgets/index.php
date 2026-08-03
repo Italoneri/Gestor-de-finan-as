@@ -55,7 +55,11 @@ use App\Models\Money;
 <section class="card list-card">
     <h2>Metas definidas</h2>
     <?php if ($budgets === []) : ?>
-        <p class="muted">Nenhuma meta para <?= e(mb_strtolower(br_month($month))) ?>.</p>
+        <div class="empty-state">
+            <?= icon('target') ?>
+            <p>Nenhuma meta definida para <?= e(mb_strtolower(br_month($month))) ?>.</p>
+            <p>Use o formulário acima para definir um limite de gasto.</p>
+        </div>
     <?php else : ?>
         <table class="table">
             <thead>
