@@ -9,6 +9,8 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\Validator;
 use App\Core\View;
+use App\Models\Category;
+use App\Models\CategoryInput;
 use App\Models\CategoryType;
 use App\Repositories\CategoryRepository;
 use App\Services\AuthService;
@@ -39,22 +41,28 @@ final class CategoryController
     public function store(Request $request): Response
     {
         $name = trim($request->input('name'));
+        $color = $request->input('color', Category::DEFAULT_COLOR);
         $type = CategoryType::tryFrom($request->input('type'));
 
         $validator = new Validator();
         $validator->label('name', $name);
+        $validator->color('color', $color);
         if ($type === null) {
             $validator->fail('type', 'Escolha um tipo válido.');
         }
         if ($validator->fails()) {
             $this->session->flash('errors', $validator->errors());
-            $this->session->flash('old', ['name' => $name]);
+            $this->session->flash('old', ['name' => $name, 'color' => $color]);
 
             return Response::redirect('/categories');
         }
 
         try {
-            $this->categories->create($this->auth->requireUserId(), $name, $type);
+            $this->categories->create(
+                $this->auth->requireUserId(),
+                $type,
+                new CategoryInput($name, $color),
+            );
             $this->session->flash('status', 'Categoria criada.');
         } catch (PDOException $e) {
             $this->rethrowUnlessConstraint($e);
@@ -83,17 +91,21 @@ final class CategoryController
     public function update(Request $request, int $id): Response
     {
         $name = trim($request->input('name'));
+        $color = $request->input('color', Category::DEFAULT_COLOR);
 
         $validator = new Validator();
         $validator->label('name', $name);
+        $validator->color('color', $color);
         if ($validator->fails()) {
             $this->session->flash('errors', $validator->errors());
 
             return Response::redirect("/categories/{$id}/edit");
         }
 
+        $input = new CategoryInput($name, $color);
+
         try {
-            if ($this->categories->update($this->auth->requireUserId(), $id, $name)) {
+            if ($this->categories->update($this->auth->requireUserId(), $id, $input)) {
                 $this->session->flash('status', 'Categoria atualizada.');
             } else {
                 $this->session->flash('error', 'Categoria não encontrada.');

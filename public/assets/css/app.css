@@ -56,13 +56,6 @@
     --radius-sm: 10px;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 4px 12px rgb(0 0 0 / 0.45);
-
-    /*
-     * Donut slices. A cool family around the accent rather than one hue, which
-     * would make neighbouring slices indistinguishable. Read by the dashboard
-     * script so the hex values are not duplicated in JS.
-     */
-    --chart-palette: #38bdf8, #60a5fa, #818cf8, #22d3ee, #7dd3fc, #a78bfa, #2dd4bf, #a5b4fc;
 }
 
 /*
@@ -103,8 +96,6 @@
 
     --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
     --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.05), 0 10px 20px -5px rgb(15 23 42 / 0.08);
-
-    --chart-palette: #0284c7, #4f46e5, #0891b2, #7c3aed, #0369a1, #2563eb, #0d9488, #6d28d9;
 }
 
 * {
@@ -499,6 +490,87 @@ select:focus {
     outline: 2px solid var(--primary);
     outline-offset: 1px;
     border-color: var(--primary);
+}
+
+/* fieldset carries browser default chrome the other fields do not have */
+.color-field {
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.color-field legend {
+    padding: 0;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.35rem;
+}
+
+.swatches {
+    display: grid;
+    grid-template-columns: repeat(5, 1.5rem);
+    gap: 0.4rem;
+}
+
+.swatch {
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: var(--swatch);
+    cursor: pointer;
+
+    /* the ring sits outside the dot, so selection never resizes the grid */
+    box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.swatch:hover {
+    box-shadow: 0 0 0 2px var(--border-strong);
+}
+
+.swatch[aria-pressed="true"] {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--swatch);
+}
+
+.swatch:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+}
+
+.color-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.6rem 0 0;
+    font-weight: 400;
+    font-size: 0.8125rem;
+    color: var(--muted);
+}
+
+.color-custom input[type="color"] {
+    width: 2.25rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    cursor: pointer;
+}
+
+.category-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.color-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 999px;
+    background: var(--dot);
+    flex: none;
 }
 
 .table {

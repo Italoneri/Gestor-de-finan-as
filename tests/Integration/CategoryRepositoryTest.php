@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use App\Core\Migrator;
+use App\Models\Category;
+use App\Models\CategoryInput;
 use App\Models\CategoryType;
 use App\Repositories\CategoryRepository;
 use PDO;
@@ -33,10 +35,10 @@ final class CategoryRepositoryTest extends TestCase
 
     public function testListsOnlyOwnCategoriesOrderedByTypeAndName(): void
     {
-        $this->repo->create($this->anaId, 'Mercado', CategoryType::Expense);
-        $this->repo->create($this->anaId, 'Salário', CategoryType::Income);
-        $this->repo->create($this->anaId, 'Lazer', CategoryType::Expense);
-        $this->repo->create($this->beaId, 'Da Bea', CategoryType::Expense);
+        $this->createCategory($this->anaId, 'Mercado', CategoryType::Expense);
+        $this->createCategory($this->anaId, 'Salário', CategoryType::Income);
+        $this->createCategory($this->anaId, 'Lazer', CategoryType::Expense);
+        $this->createCategory($this->beaId, 'Da Bea', CategoryType::Expense);
 
         $categories = $this->repo->allForUser($this->anaId);
 
@@ -47,7 +49,7 @@ final class CategoryRepositoryTest extends TestCase
 
     public function testFindReturnsNullForOtherUsersCategory(): void
     {
-        $id = $this->repo->create($this->beaId, 'Da Bea', CategoryType::Expense);
+        $id = $this->createCategory($this->beaId, 'Da Bea', CategoryType::Expense);
 
         $this->assertNull($this->repo->find($this->anaId, $id));
         $this->assertNotNull($this->repo->find($this->beaId, $id));
@@ -55,10 +57,10 @@ final class CategoryRepositoryTest extends TestCase
 
     public function testUpdatesOnlyOwnCategory(): void
     {
-        $id = $this->repo->create($this->anaId, 'Mercado', CategoryType::Expense);
+        $id = $this->createCategory($this->anaId, 'Mercado', CategoryType::Expense);
 
-        $this->assertFalse($this->repo->update($this->beaId, $id, 'Invadido'));
-        $this->assertTrue($this->repo->update($this->anaId, $id, 'Supermercado'));
+        $this->assertFalse($this->repo->update($this->beaId, $id, new CategoryInput('Invadido', '#f43f5e')));
+        $this->assertTrue($this->repo->update($this->anaId, $id, new CategoryInput('Supermercado', '#f43f5e')));
 
         $category = $this->repo->find($this->anaId, $id);
         $this->assertSame('Supermercado', $category->name);
@@ -66,7 +68,7 @@ final class CategoryRepositoryTest extends TestCase
 
     public function testDeletesOnlyOwnCategory(): void
     {
-        $id = $this->repo->create($this->anaId, 'Mercado', CategoryType::Expense);
+        $id = $this->createCategory($this->anaId, 'Mercado', CategoryType::Expense);
 
         $this->assertFalse($this->repo->delete($this->beaId, $id));
         $this->assertTrue($this->repo->delete($this->anaId, $id));
@@ -75,25 +77,55 @@ final class CategoryRepositoryTest extends TestCase
 
     public function testRejectsDuplicateNamePerUserAndType(): void
     {
-        $this->repo->create($this->anaId, 'Mercado', CategoryType::Expense);
+        $this->createCategory($this->anaId, 'Mercado', CategoryType::Expense);
 
         $this->expectException(PDOException::class);
-        $this->repo->create($this->anaId, 'Mercado', CategoryType::Expense);
+        $this->createCategory($this->anaId, 'Mercado', CategoryType::Expense);
     }
 
     public function testAllowsSameNameForDifferentUsersOrTypes(): void
     {
-        $this->repo->create($this->anaId, 'Extra', CategoryType::Expense);
-        $this->repo->create($this->anaId, 'Extra', CategoryType::Income);
-        $this->repo->create($this->beaId, 'Extra', CategoryType::Expense);
+        $this->createCategory($this->anaId, 'Extra', CategoryType::Expense);
+        $this->createCategory($this->anaId, 'Extra', CategoryType::Income);
+        $this->createCategory($this->beaId, 'Extra', CategoryType::Expense);
 
         $this->assertCount(2, $this->repo->allForUser($this->anaId));
         $this->assertCount(1, $this->repo->allForUser($this->beaId));
     }
 
+    public function testStoresTheChosenColor(): void
+    {
+        $id = $this->createCategory($this->anaId, 'Mercado', CategoryType::Expense, '#f97316');
+
+        $this->assertSame('#f97316', $this->repo->find($this->anaId, $id)->color);
+    }
+
+    public function testUpdatesColorAlongsideName(): void
+    {
+        $id = $this->createCategory($this->anaId, 'Mercado', CategoryType::Expense, '#f97316');
+
+        $this->repo->update($this->anaId, $id, new CategoryInput('Supermercado', '#22c55e'));
+
+        $category = $this->repo->find($this->anaId, $id);
+        $this->assertSame('Supermercado', $category->name);
+        $this->assertSame('#22c55e', $category->color);
+    }
+
+    public function testFallsBackToTheDefaultColorWhenTheColumnIsNotWritten(): void
+    {
+        $this->pdo->exec(
+            "INSERT INTO categories (user_id, name, type, created_at)
+             VALUES ({$this->anaId}, 'Legada', 'expense', 'x')"
+        );
+
+        $categories = $this->repo->allForUser($this->anaId);
+
+        $this->assertSame(Category::DEFAULT_COLOR, $categories[0]->color);
+    }
+
     public function testDeleteRejectsCategoryInUseByTransactions(): void
     {
-        $categoryId = $this->repo->create($this->anaId, 'Mercado', CategoryType::Expense);
+        $categoryId = $this->createCategory($this->anaId, 'Mercado', CategoryType::Expense);
         $this->pdo->exec(
             "INSERT INTO accounts (user_id, name, type, created_at) VALUES ({$this->anaId}, 'Carteira', 'wallet', 'x')"
         );
@@ -106,6 +138,15 @@ final class CategoryRepositoryTest extends TestCase
 
         $this->expectException(PDOException::class);
         $this->repo->delete($this->anaId, $categoryId);
+    }
+
+    private function createCategory(
+        int $userId,
+        string $name,
+        CategoryType $type,
+        string $color = Category::DEFAULT_COLOR,
+    ): int {
+        return $this->repo->create($userId, $type, new CategoryInput($name, $color));
     }
 
     private function insertUser(string $email): int

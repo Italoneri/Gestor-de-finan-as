@@ -65,6 +65,18 @@ final class Validator
         }
     }
 
+    /**
+     * Six-digit lowercase hex, the only shape <input type="color"> submits.
+     * The value ends up inside an inline style and a chart payload, so the
+     * pattern is what keeps arbitrary text out of both.
+     */
+    public function color(string $field, string $value): void
+    {
+        if (preg_match('/^#[0-9a-f]{6}$/', $value) !== 1) {
+            $this->errors[$field] = 'Escolha uma cor válida.';
+        }
+    }
+
     public function email(string $field, string $value): void
     {
         $valid = strlen($value) <= self::EMAIL_MAX_LENGTH

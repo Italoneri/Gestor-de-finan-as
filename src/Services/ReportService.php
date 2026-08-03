@@ -60,11 +60,11 @@ final class ReportService
     {
         [$start, $end] = self::monthBounds($month);
         $stmt = $this->pdo->prepare(
-            'SELECT c.id AS category_id, c.name, SUM(t.amount_cents) AS total_cents
+            'SELECT c.id AS category_id, c.name, c.color, SUM(t.amount_cents) AS total_cents
              FROM transactions t
              JOIN categories c ON c.id = t.category_id
              WHERE t.user_id = ? AND t.type = ? AND t.date >= ? AND t.date < ?
-             GROUP BY c.id, c.name
+             GROUP BY c.id, c.name, c.color
              ORDER BY total_cents DESC'
         );
         $stmt->execute([$userId, $type->value, $start, $end]);
@@ -74,6 +74,7 @@ final class ReportService
                 (int) $row['category_id'],
                 (string) $row['name'],
                 (int) $row['total_cents'],
+                (string) $row['color'],
             ),
             $stmt->fetchAll(),
         );

@@ -69,7 +69,12 @@ use App\Models\Money;
                 <tbody>
                 <?php foreach ($incomeByCategory as $total) : ?>
                     <tr>
-                        <td><?= e($total->name) ?></td>
+                        <td>
+                            <span class="category-name">
+                                <span class="color-dot" style="--dot: <?= e($total->color) ?>"></span>
+                                <?= e($total->name) ?>
+                            </span>
+                        </td>
                         <td class="num amount-income">R$ <?= e($total->total()->formatBr()) ?></td>
                     </tr>
                 <?php endforeach; ?>
@@ -89,7 +94,12 @@ use App\Models\Money;
                 <tbody>
                 <?php foreach ($expensesByCategory as $total) : ?>
                     <tr>
-                        <td><?= e($total->name) ?></td>
+                        <td>
+                            <span class="category-name">
+                                <span class="color-dot" style="--dot: <?= e($total->color) ?>"></span>
+                                <?= e($total->name) ?>
+                            </span>
+                        </td>
                         <td class="num amount-expense">R$ <?= e($total->total()->formatBr()) ?></td>
                     </tr>
                 <?php endforeach; ?>

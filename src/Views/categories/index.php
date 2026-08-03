@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\Category;
 use App\Models\CategoryType;
+
+$color = $old['color'] ?? Category::DEFAULT_COLOR;
 
 $byType = ['income' => [], 'expense' => []];
 foreach ($categories as $category) {
@@ -40,6 +43,7 @@ foreach ($categories as $category) {
                 <p class="field-error"><?= e($errors['type']) ?></p>
             <?php endif; ?>
         </div>
+        <?php require __DIR__ . '/_color-field.php'; ?>
         <button type="submit" class="btn btn-primary">Adicionar</button>
     </form>
 </section>
@@ -57,7 +61,12 @@ foreach ($categories as $category) {
                 <tbody>
                 <?php foreach ($byType[$type->value] as $category) : ?>
                     <tr>
-                        <td><?= e($category->name) ?></td>
+                        <td>
+                            <span class="category-name">
+                                <span class="color-dot" style="--dot: <?= e($category->color) ?>"></span>
+                                <?= e($category->name) ?>
+                            </span>
+                        </td>
                         <td class="row-actions">
                             <a href="/categories/<?= e((string) $category->id) ?>/edit">Editar</a>
                             <form method="post" action="/categories/<?= e((string) $category->id) ?>/delete">

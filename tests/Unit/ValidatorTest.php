@@ -194,6 +194,39 @@ final class ValidatorTest extends TestCase
         $this->assertNotNull($validator->error('name'));
     }
 
+    public function testAcceptsSixDigitHexColors(): void
+    {
+        $validator = new Validator();
+        $validator->color('color', '#0ea5e9');
+
+        $this->assertFalse($validator->fails());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidColors(): array
+    {
+        return [
+            'empty' => [''],
+            'missing hash' => ['0ea5e9'],
+            'shorthand' => ['#fff'],
+            'uppercase' => ['#0EA5E9'],
+            'named colour' => ['red'],
+            'css function' => ['rgb(14 165 233)'],
+            'style injection' => ['#fff;background:url(x)'],
+        ];
+    }
+
+    #[DataProvider('invalidColors')]
+    public function testRejectsInvalidColors(string $color): void
+    {
+        $validator = new Validator();
+        $validator->color('color', $color);
+
+        $this->assertNotNull($validator->error('color'));
+    }
+
     public function testAcceptsRealDates(): void
     {
         $validator = new Validator();

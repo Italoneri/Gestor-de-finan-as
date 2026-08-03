@@ -131,6 +131,7 @@ $amountClass = static fn (int $cents): string => match (true) {
     $chartData = [
         'labels' => array_map(fn ($t) => $t->name, $expensesByCategory),
         'values' => array_map(fn ($t) => round($t->totalCents / 100, 2), $expensesByCategory),
+        'colors' => array_map(fn ($t) => $t->color, $expensesByCategory),
     ];
     ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"
@@ -142,16 +143,10 @@ $amountClass = static fn (int $cents): string => match (true) {
         const brl = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const total = chartData.values.reduce((sum, value) => sum + value, 0);
 
-        // slice and chrome colours read the theme tokens instead of repeating hex values here
+        // slice colours come from the categories themselves; only the chrome follows the theme
         const token = (name) => getComputedStyle(document.documentElement)
             .getPropertyValue(name)
             .trim();
-
-        const sliceColors = () => {
-            const palette = token('--chart-palette').split(',').map((color) => color.trim());
-
-            return chartData.values.map((_, index) => palette[index % palette.length]);
-        };
 
         Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
 
@@ -161,7 +156,7 @@ $amountClass = static fn (int $cents): string => match (true) {
                 labels: chartData.labels,
                 datasets: [{
                     data: chartData.values,
-                    backgroundColor: sliceColors(),
+                    backgroundColor: chartData.colors,
                     borderWidth: 0,
                     hoverOffset: 6
                 }]
@@ -193,9 +188,8 @@ $amountClass = static fn (int $cents): string => match (true) {
             }
         });
 
-        // the canvas is painted, not styled — it has to be repainted by hand on a theme switch
+        // the canvas is painted, not styled — its legend has to follow a theme switch by hand
         document.addEventListener('themechange', () => {
-            chart.data.datasets[0].backgroundColor = sliceColors();
             chart.options.plugins.legend.labels.color = token('--muted');
             chart.update();
         });
