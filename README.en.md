@@ -153,9 +153,10 @@ Regex validates **shape**; security comes from hashing, rate limiting and prepar
 
 - **Transactions** — CRUD with amounts in cents, validated dates, type derived from the category (mismatch impossible by construction)
 - **Categories and accounts** — per-user CRUDs; deletion blocked by `ON DELETE RESTRICT` while in use
-- **Dashboard** — balance, month income × expenses, expenses-by-category chart, budgets with progress bars
+- **Dashboard** — balance, month income × expenses, expenses-by-category chart, ceilings and goals with progress bars
 - **Monthly report** — per-category summary with a month picker
-- **Spending budgets** — monthly limit per category with upsert and over-limit alert
+- **Spending ceilings** — monthly limit per expense category with upsert and over-limit alert
+- **Income goals** — monthly target per income category with upsert, amount left and a reached highlight
 - **Filters and search** — period, category, type, text (escaped `LIKE`), whitelist-based sorting, pagination
 - **CSV export** — honoring active filters; BOM + semicolons (opens correctly in pt-BR Excel)
 
@@ -169,7 +170,8 @@ src/
   Core/          → Router, Database, Request, Response, Session,
                    Csrf, Validator, View, Middleware, Migrator, ErrorHandler
   Controllers/   → Auth, Registration, PasswordReset, Transaction,
-                   Category, Account, Budget, Dashboard, Report
+                   Category, Account, Planning, Ceiling, IncomeGoal,
+                   Dashboard, Report
   Services/      → AuthService, LoginRateLimiter, RememberMeService,
                    PasswordResetService, EmailVerificationService,
                    ReportService, Tokens, Mailer (interface + LogMailer)

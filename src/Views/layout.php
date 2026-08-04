@@ -7,7 +7,7 @@ $navItems = [
     '/transactions' => 'Transações',
     '/categories' => 'Categorias',
     '/accounts' => 'Contas',
-    '/budgets' => 'Metas',
+    '/planning' => 'Planejamento',
     '/reports' => 'Relatório',
 ];
 $isCurrent = fn (string $href): bool => $href === '/'

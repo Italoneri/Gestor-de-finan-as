@@ -34,7 +34,8 @@ final class DashboardController
             'incomeCents' => $totals['income'],
             'expenseCents' => $totals['expense'],
             'expensesByCategory' => $this->reports->categoryTotals($userId, $month, CategoryType::Expense),
-            'budgets' => $this->reports->budgetProgress($userId, $month),
+            'ceilings' => $this->reports->ceilingProgress($userId, $month),
+            'goals' => $this->reports->incomeGoalProgress($userId, $month),
             'recent' => $this->transactions->allForUser($userId, 5),
         ]);
     }

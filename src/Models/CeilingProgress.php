@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-final class BudgetProgress
+final class CeilingProgress
 {
     public function __construct(
-        public readonly int $budgetId,
+        public readonly int $ceilingId,
         public readonly string $categoryName,
         public readonly int $limitCents,
         public readonly int $spentCents,
@@ -23,6 +23,10 @@ final class BudgetProgress
         return (int) round($this->spentCents * 100 / $this->limitCents);
     }
 
+    /**
+     * Strict: spending exactly the ceiling has not crossed it. The mirror
+     * boundary in IncomeGoalProgress::reached() is inclusive on purpose.
+     */
     public function overLimit(): bool
     {
         return $this->spentCents > $this->limitCents;

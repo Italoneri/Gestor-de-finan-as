@@ -85,15 +85,15 @@ final class ReportServiceTest extends TestCase
         $this->assertSame(35000, $totals[1]->totalCents);
     }
 
-    public function testBudgetProgressComputesSpentInsideMonthOnly(): void
+    public function testCeilingProgressComputesSpentInsideMonthOnly(): void
     {
-        $this->insertBudget($this->anaId, $this->marketCat, '2026-07', 80000);
-        $this->insertBudget($this->anaId, $this->leisureCat, '2026-07', 30000);
+        $this->insertCeiling($this->anaId, $this->marketCat, '2026-07', 80000);
+        $this->insertCeiling($this->anaId, $this->leisureCat, '2026-07', 30000);
         $this->insertTx($this->anaId, $this->marketCat, 'expense', 20000, '2026-07-01');
         $this->insertTx($this->anaId, $this->marketCat, 'expense', 70000, '2026-07-20');
         $this->insertTx($this->anaId, $this->marketCat, 'expense', 10000, '2026-06-15');
 
-        $progress = $this->service->budgetProgress($this->anaId, '2026-07');
+        $progress = $this->service->ceilingProgress($this->anaId, '2026-07');
 
         $this->assertCount(2, $progress);
         $byName = [];
@@ -106,6 +106,43 @@ final class ReportServiceTest extends TestCase
         $this->assertTrue($byName['Mercado']->overLimit());
         $this->assertSame(0, $byName['Lazer']->spentCents);
         $this->assertFalse($byName['Lazer']->overLimit());
+    }
+
+    public function testIncomeGoalProgressCountsOnlyIncomeInsideMonth(): void
+    {
+        $freelanceCat = $this->insertCategory($this->anaId, 'Freelance', 'income');
+        $this->insertGoal($this->anaId, $this->salaryCat, '2026-07', 500000);
+        $this->insertGoal($this->anaId, $freelanceCat, '2026-07', 150000);
+        $this->insertTx($this->anaId, $this->salaryCat, 'income', 500000, '2026-07-05');
+        $this->insertTx($this->anaId, $this->salaryCat, 'income', 20000, '2026-06-05');
+
+        $progress = $this->service->incomeGoalProgress($this->anaId, '2026-07');
+
+        $this->assertCount(2, $progress);
+        $byName = [];
+        foreach ($progress as $item) {
+            $byName[$item->categoryName] = $item;
+        }
+        $this->assertSame(500000, $byName['Salário']->receivedCents);
+        $this->assertSame(100, $byName['Salário']->percent());
+        $this->assertTrue($byName['Salário']->reached());
+        $this->assertSame(0, $byName['Salário']->remainingCents());
+        $this->assertSame(0, $byName['Freelance']->receivedCents);
+        $this->assertFalse($byName['Freelance']->reached());
+        $this->assertSame(150000, $byName['Freelance']->remainingCents());
+    }
+
+    public function testIncomeGoalProgressIgnoresExpenseOnTheSameCategory(): void
+    {
+        $this->insertGoal($this->anaId, $this->salaryCat, '2026-07', 500000);
+        $this->insertTx($this->anaId, $this->salaryCat, 'income', 300000, '2026-07-05');
+        $this->insertTx($this->anaId, $this->salaryCat, 'expense', 900000, '2026-07-06');
+
+        $progress = $this->service->incomeGoalProgress($this->anaId, '2026-07');
+
+        $this->assertCount(1, $progress);
+        $this->assertSame(300000, $progress[0]->receivedCents);
+        $this->assertFalse($progress[0]->reached());
     }
 
     private function insertUser(string $email): int
@@ -153,11 +190,19 @@ final class ReportServiceTest extends TestCase
         $stmt->execute([$userId, $accountId ?? $this->account, $categoryId, $type, $cents, 'x', $date, 'x', 'x']);
     }
 
-    private function insertBudget(int $userId, int $categoryId, string $month, int $limitCents): void
+    private function insertCeiling(int $userId, int $categoryId, string $month, int $limitCents): void
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO budgets (user_id, category_id, month, limit_cents) VALUES (?, ?, ?, ?)'
+            'INSERT INTO ceilings (user_id, category_id, month, limit_cents) VALUES (?, ?, ?, ?)'
         );
         $stmt->execute([$userId, $categoryId, $month, $limitCents]);
+    }
+
+    private function insertGoal(int $userId, int $categoryId, string $month, int $targetCents): void
+    {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO income_goals (user_id, category_id, month, target_cents) VALUES (?, ?, ?, ?)'
+        );
+        $stmt->execute([$userId, $categoryId, $month, $targetCents]);
     }
 }

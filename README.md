@@ -153,9 +153,10 @@ Regex valida **forma**; a segurança vem do hash, do rate limit e dos prepared s
 
 - **Transações** — CRUD com valor em centavos, data validada, tipo derivado da categoria (mismatch impossível por construção)
 - **Categorias e contas** — CRUDs por usuário; exclusão bloqueada por `ON DELETE RESTRICT` quando em uso
-- **Dashboard** — saldo, receitas × despesas do mês, gráfico de despesas por categoria, metas com barra de progresso
+- **Dashboard** — saldo, receitas × despesas do mês, gráfico de despesas por categoria, tetos e metas com barra de progresso
 - **Relatório mensal** — resumo por categoria com seletor de mês
-- **Metas de gasto** — limite mensal por categoria com upsert e alerta ao estourar
+- **Tetos de gasto** — limite mensal por categoria de despesa com upsert e alerta ao estourar
+- **Metas de receita** — alvo mensal por categoria de receita com upsert, quanto falta e destaque ao atingir
 - **Filtros e busca** — período, categoria, tipo, texto (com `LIKE` escapado), ordenação por whitelist, paginação
 - **Export CSV** — respeitando os filtros ativos; BOM + ponto-e-vírgula (abre certo no Excel pt-BR)
 
@@ -169,7 +170,8 @@ src/
   Core/          → Router, Database, Request, Response, Session,
                    Csrf, Validator, View, Middleware, Migrator, ErrorHandler
   Controllers/   → Auth, Registration, PasswordReset, Transaction,
-                   Category, Account, Budget, Dashboard, Report
+                   Category, Account, Planning, Ceiling, IncomeGoal,
+                   Dashboard, Report
   Services/      → AuthService, LoginRateLimiter, RememberMeService,
                    PasswordResetService, EmailVerificationService,
                    ReportService, Tokens, Mailer (interface + LogMailer)

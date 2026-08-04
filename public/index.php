@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 use App\Controllers\AccountController;
 use App\Controllers\AuthController;
-use App\Controllers\BudgetController;
 use App\Controllers\CategoryController;
+use App\Controllers\CeilingController;
 use App\Controllers\DashboardController;
+use App\Controllers\IncomeGoalController;
 use App\Controllers\ReportController;
 use App\Controllers\PasswordResetController;
+use App\Controllers\PlanningController;
 use App\Controllers\RegistrationController;
 use App\Controllers\TransactionController;
 use App\Core\Config;
@@ -22,8 +24,9 @@ use App\Core\Session;
 use App\Core\Theme;
 use App\Core\View;
 use App\Repositories\AccountRepository;
-use App\Repositories\BudgetRepository;
 use App\Repositories\CategoryRepository;
+use App\Repositories\CeilingRepository;
+use App\Repositories\IncomeGoalRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
@@ -106,7 +109,11 @@ $transactionCtrl = new TransactionController(
 $reportService = new ReportService($pdo);
 $dashboardCtrl = new DashboardController($reportService, $transactionRepo, $auth, $view);
 $reportCtrl = new ReportController($reportService, $auth, $view);
-$budgetCtrl = new BudgetController(new BudgetRepository($pdo), $categoryRepo, $auth, $view, $session);
+$ceilingRepo = new CeilingRepository($pdo);
+$goalRepo = new IncomeGoalRepository($pdo);
+$ceilingCtrl = new CeilingController($ceilingRepo, $categoryRepo, $auth, $session);
+$goalCtrl = new IncomeGoalController($goalRepo, $categoryRepo, $auth, $session);
+$planningCtrl = new PlanningController($ceilingRepo, $goalRepo, $categoryRepo, $auth, $view, $session);
 
 $router = new Router();
 $router->setNotFound(fn (Request $r): Response => $view->render('errors/404', [
@@ -203,14 +210,24 @@ $router->post('/transactions/{id}/delete', Middleware::auth($auth, Middleware::c
 
 $router->get('/reports', Middleware::auth($auth, fn (Request $r): Response => $reportCtrl->index($r)));
 
-$router->get('/budgets', Middleware::auth($auth, fn (Request $r): Response => $budgetCtrl->index($r)));
-$router->post('/budgets', Middleware::auth($auth, Middleware::csrf(
+$router->get('/planning', Middleware::auth($auth, fn (Request $r): Response => $planningCtrl->index($r)));
+
+$router->post('/ceilings', Middleware::auth($auth, Middleware::csrf(
     $csrf,
-    fn (Request $r): Response => $budgetCtrl->store($r),
+    fn (Request $r): Response => $ceilingCtrl->store($r),
 )));
-$router->post('/budgets/{id}/delete', Middleware::auth($auth, Middleware::csrf(
+$router->post('/ceilings/{id}/delete', Middleware::auth($auth, Middleware::csrf(
     $csrf,
-    fn (Request $r, array $p): Response => $budgetCtrl->destroy($r, (int) $p['id']),
+    fn (Request $r, array $p): Response => $ceilingCtrl->destroy($r, (int) $p['id']),
+)));
+
+$router->post('/goals', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r): Response => $goalCtrl->store($r),
+)));
+$router->post('/goals/{id}/delete', Middleware::auth($auth, Middleware::csrf(
+    $csrf,
+    fn (Request $r, array $p): Response => $goalCtrl->destroy($r, (int) $p['id']),
 )));
 
 $router->dispatch(Request::fromGlobals())->send();

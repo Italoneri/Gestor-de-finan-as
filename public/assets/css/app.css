@@ -745,11 +745,11 @@ input[type="month"] {
     height: 300px;
 }
 
-.budget-row {
+.plan-row {
     margin-bottom: 1.1rem;
 }
 
-.budget-meta {
+.plan-meta {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
@@ -770,8 +770,13 @@ input[type="month"] {
     border-radius: 999px;
 }
 
+/* a ceiling crossed is bad news, a goal reached is good news */
 .progress-bar.over {
     background: var(--negative);
+}
+
+.progress-bar.reached {
+    background: var(--positive);
 }
 
 .report-head {

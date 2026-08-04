@@ -2,6 +2,8 @@
 
 use App\Models\Money;
 
+$planLink = '/planning?month=' . urlencode($month);
+
 ?>
 <section class="page-head report-head">
     <h1>Relatório — <?= e(br_month($month)) ?></h1>
@@ -109,29 +111,7 @@ use App\Models\Money;
     </section>
 </div>
 
-<section class="card">
-    <h2>Metas do mês</h2>
-    <?php if ($budgets === []) : ?>
-        <div class="empty-state">
-            <?= icon('target') ?>
-            <p>Nenhuma meta definida para este mês.</p>
-            <p><a href="/budgets?month=<?= e($month) ?>">Criar metas</a></p>
-        </div>
-    <?php else : ?>
-        <?php foreach ($budgets as $item) : ?>
-            <div class="budget-row">
-                <div class="budget-meta">
-                    <span><?= e($item->categoryName) ?></span>
-                    <span class="<?= $item->overLimit() ? 'amount-expense' : 'muted' ?>">
-                        R$ <?= e($item->spent()->formatBr()) ?> / R$ <?= e($item->limit()->formatBr()) ?>
-                        (<?= e((string) $item->percent()) ?>%)
-                    </span>
-                </div>
-                <div class="progress">
-                    <div class="progress-bar<?= $item->overLimit() ? ' over' : '' ?>"
-                         style="width: <?= e((string) min($item->percent(), 100)) ?>%"></div>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    <?php endif; ?>
-</section>
+<div class="grid-2col">
+    <?php require __DIR__ . '/../planning/_ceiling-progress.php'; ?>
+    <?php require __DIR__ . '/../planning/_goal-progress.php'; ?>
+</div>

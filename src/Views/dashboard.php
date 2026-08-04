@@ -9,6 +9,8 @@ $amountClass = static fn (int $cents): string => match (true) {
     default => '',
 };
 
+$planLink = '/planning?month=' . urlencode($month);
+
 ?>
 <section class="page-head">
     <h1>Painel — <?= e(br_month($month)) ?></h1>
@@ -68,32 +70,8 @@ $amountClass = static fn (int $cents): string => match (true) {
             </div>
         <?php endif; ?>
     </section>
-    <section class="card">
-        <h2>Metas do mês</h2>
-        <?php if ($budgets === []) : ?>
-            <div class="empty-state">
-                <?= icon('target') ?>
-                <p>Nenhuma meta definida para este mês.</p>
-                <p><a href="/budgets">Criar metas</a></p>
-            </div>
-        <?php else : ?>
-            <?php foreach ($budgets as $item) : ?>
-                <div class="budget-row">
-                    <div class="budget-meta">
-                        <span><?= e($item->categoryName) ?></span>
-                        <span class="<?= $item->overLimit() ? 'amount-expense' : 'muted' ?>">
-                            R$ <?= e($item->spent()->formatBr()) ?> / R$ <?= e($item->limit()->formatBr()) ?>
-                            (<?= e((string) $item->percent()) ?>%)
-                        </span>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar<?= $item->overLimit() ? ' over' : '' ?>"
-                             style="width: <?= e((string) min($item->percent(), 100)) ?>%"></div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </section>
+    <?php require __DIR__ . '/planning/_ceiling-progress.php'; ?>
+    <?php require __DIR__ . '/planning/_goal-progress.php'; ?>
 </div>
 
 <section class="card list-card">
