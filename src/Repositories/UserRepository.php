@@ -9,7 +9,7 @@ use PDO;
 
 final class UserRepository
 {
-    private const COLUMNS = 'id, name, email, password_hash, email_verified_at';
+    private const COLUMNS = 'id, name, email, password_hash';
 
     public function __construct(private readonly PDO $pdo)
     {
@@ -37,13 +37,6 @@ final class UserRepository
     {
         $stmt = $this->pdo->prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?');
         $stmt->execute([$passwordHash, date('c'), $id]);
-    }
-
-    public function markEmailVerified(int $id): void
-    {
-        $now = date('c');
-        $stmt = $this->pdo->prepare('UPDATE users SET email_verified_at = ?, updated_at = ? WHERE id = ?');
-        $stmt->execute([$now, $now, $id]);
     }
 
     /**

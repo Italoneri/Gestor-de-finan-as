@@ -26,7 +26,6 @@ final class MigratorTest extends TestCase
             'login_attempts',
             'remember_tokens',
             'password_resets',
-            'email_verifications',
             'accounts',
             'categories',
             'transactions',
@@ -36,6 +35,17 @@ final class MigratorTest extends TestCase
         foreach ($expected as $table) {
             $this->assertContains($table, $tables);
         }
+        $this->assertNotContains('email_verifications', $tables);
+    }
+
+    public function testDropsEmailVerifiedColumnFromUsers(): void
+    {
+        $pdo = $this->freshConnection();
+
+        Migrator::run($pdo, self::MIGRATIONS_PATH);
+
+        $columns = $pdo->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_COLUMN, 1);
+        $this->assertNotContains('email_verified_at', $columns);
     }
 
     public function testSecondRunAppliesNothing(): void

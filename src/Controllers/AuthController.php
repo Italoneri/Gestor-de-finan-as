@@ -53,7 +53,6 @@ final class AuthController
         $message = match ($result) {
             LoginResult::InvalidCredentials => 'Credenciais inválidas.',
             LoginResult::RateLimited => 'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.',
-            LoginResult::EmailNotVerified => 'Confirme seu e-mail antes de entrar. Enviamos o link no cadastro.',
             LoginResult::Success => '',
         };
         $this->session->flash('errors', ['credentials' => $message]);

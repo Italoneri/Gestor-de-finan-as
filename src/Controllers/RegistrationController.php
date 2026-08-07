@@ -10,18 +10,13 @@ use App\Core\Session;
 use App\Core\Validator;
 use App\Core\View;
 use App\Services\AuthService;
-use App\Services\EmailVerificationService;
-use App\Services\MailerInterface;
 
 final class RegistrationController
 {
     public function __construct(
         private readonly AuthService $auth,
-        private readonly EmailVerificationService $verification,
-        private readonly MailerInterface $mailer,
         private readonly View $view,
         private readonly Session $session,
-        private readonly string $appUrl,
     ) {
     }
 
@@ -58,31 +53,10 @@ final class RegistrationController
             );
         }
 
-        $this->sendVerificationLink($email, $userId);
-        $this->session->flash('status', 'Conta criada! Enviamos um link de confirmação para o seu e-mail.');
+        // straight into the app: the dashboard is the confirmation
+        $this->auth->loginUsingId($userId);
 
-        return Response::redirect('/login');
-    }
-
-    public function verifyEmail(Request $request): Response
-    {
-        if ($this->verification->verify($request->query('token'))) {
-            $this->session->flash('status', 'E-mail verificado! Faça login para entrar.');
-        } else {
-            $this->session->flash('error', 'Link de verificação inválido ou expirado.');
-        }
-
-        return Response::redirect('/login');
-    }
-
-    private function sendVerificationLink(string $email, int $userId): void
-    {
-        $link = rtrim($this->appUrl, '/') . '/verify-email?token=' . $this->verification->issue($userId);
-        $this->mailer->send(
-            $email,
-            'Confirme seu e-mail',
-            "Olá! Confirme seu e-mail acessando o link abaixo:\n{$link}\n\nO link expira em 24 horas.",
-        );
+        return Response::redirect('/');
     }
 
     /**
