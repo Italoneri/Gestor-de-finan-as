@@ -33,7 +33,8 @@ final class ReportController
             'expenseCents' => $totals['expense'],
             'incomeByCategory' => $this->reports->categoryTotals($userId, $month, CategoryType::Income),
             'expensesByCategory' => $this->reports->categoryTotals($userId, $month, CategoryType::Expense),
-            'budgets' => $this->reports->budgetProgress($userId, $month),
+            'ceilings' => $this->reports->ceilingProgress($userId, $month),
+            'goals' => $this->reports->incomeGoalProgress($userId, $month),
         ]);
     }
 }

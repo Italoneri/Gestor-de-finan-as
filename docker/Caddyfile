@@ -1,0 +1,8 @@
+# APP_DOMAIN comes from .env.deploy via compose. Caddy requests a Let's Encrypt
+# certificate for exactly this name on first boot and renews it on its own.
+# Setting it to "localhost" makes Caddy issue an internal certificate instead,
+# which is how the production stack gets tested without spending an ACME quota.
+{$APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:80
+}

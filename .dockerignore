@@ -3,6 +3,14 @@ vendor
 database/*.sqlite
 storage/*.log
 .env
+.env.deploy
 .phpunit.cache
 Dockerfile
 docker-compose.yml
+docker-compose.prod.yml
+tests
+phpunit.xml
+phpcs.xml
+docs
+README.md
+README.en.md

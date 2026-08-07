@@ -91,11 +91,20 @@ foreach ($transactions as [$type, $category, $account, $cents, $description, $da
     ]);
 }
 
-$insertBudget = $pdo->prepare(
-    'INSERT INTO budgets (user_id, category_id, month, limit_cents) VALUES (?, ?, ?, ?)'
+$insertCeiling = $pdo->prepare(
+    'INSERT INTO ceilings (user_id, category_id, month, limit_cents) VALUES (?, ?, ?, ?)'
 );
 foreach ([['Mercado', 80000], ['Lazer', 30000], ['Transporte', 25000]] as [$category, $limit]) {
-    $insertBudget->execute([$userId, $categoryIds[$category], $month, $limit]);
+    $insertCeiling->execute([$userId, $categoryIds[$category], $month, $limit]);
+}
+
+// targets picked against the seeded income above so the dashboard opens with
+// one goal already reached (Salário) and one still short (Freelance)
+$insertGoal = $pdo->prepare(
+    'INSERT INTO income_goals (user_id, category_id, month, target_cents) VALUES (?, ?, ?, ?)'
+);
+foreach ([['Salário', 500000], ['Freelance', 150000]] as [$category, $target]) {
+    $insertGoal->execute([$userId, $categoryIds[$category], $month, $target]);
 }
 
 $pdo->commit();

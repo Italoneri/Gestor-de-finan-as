@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\BudgetProgress;
 use App\Models\CategoryTotal;
 use App\Models\CategoryType;
+use App\Models\CeilingProgress;
+use App\Models\IncomeGoalProgress;
 use PDO;
 
 /**
@@ -81,33 +82,71 @@ final class ReportService
     }
 
     /**
-     * @return list<BudgetProgress>
+     * The date and type predicates live in the JOIN, not the WHERE: moving them
+     * out would turn the LEFT JOIN into an INNER one and drop untouched limits.
+     *
+     * @return list<CeilingProgress>
      */
-    public function budgetProgress(int $userId, string $month): array
+    public function ceilingProgress(int $userId, string $month): array
     {
         [$start, $end] = self::monthBounds($month);
         $stmt = $this->pdo->prepare(
-            'SELECT b.id, c.name AS category_name, b.limit_cents,
+            'SELECT ce.id, c.name AS category_name, ce.limit_cents,
                     COALESCE(SUM(t.amount_cents), 0) AS spent_cents
-             FROM budgets b
-             JOIN categories c ON c.id = b.category_id
+             FROM ceilings ce
+             JOIN categories c ON c.id = ce.category_id
              LEFT JOIN transactions t
-                    ON t.category_id = b.category_id
-                   AND t.user_id = b.user_id
+                    ON t.category_id = ce.category_id
+                   AND t.user_id = ce.user_id
                    AND t.type = ?
                    AND t.date >= ? AND t.date < ?
-             WHERE b.user_id = ? AND b.month = ?
-             GROUP BY b.id, c.name, b.limit_cents
+             WHERE ce.user_id = ? AND ce.month = ?
+             GROUP BY ce.id, c.name, ce.limit_cents
              ORDER BY c.name'
         );
         $stmt->execute([CategoryType::Expense->value, $start, $end, $userId, $month]);
 
         return array_map(
-            fn (array $row): BudgetProgress => new BudgetProgress(
+            fn (array $row): CeilingProgress => new CeilingProgress(
                 (int) $row['id'],
                 (string) $row['category_name'],
                 (int) $row['limit_cents'],
                 (int) $row['spent_cents'],
+            ),
+            $stmt->fetchAll(),
+        );
+    }
+
+    /**
+     * Mirror of ceilingProgress over income: what came in against the target.
+     *
+     * @return list<IncomeGoalProgress>
+     */
+    public function incomeGoalProgress(int $userId, string $month): array
+    {
+        [$start, $end] = self::monthBounds($month);
+        $stmt = $this->pdo->prepare(
+            'SELECT g.id, c.name AS category_name, g.target_cents,
+                    COALESCE(SUM(t.amount_cents), 0) AS received_cents
+             FROM income_goals g
+             JOIN categories c ON c.id = g.category_id
+             LEFT JOIN transactions t
+                    ON t.category_id = g.category_id
+                   AND t.user_id = g.user_id
+                   AND t.type = ?
+                   AND t.date >= ? AND t.date < ?
+             WHERE g.user_id = ? AND g.month = ?
+             GROUP BY g.id, c.name, g.target_cents
+             ORDER BY c.name'
+        );
+        $stmt->execute([CategoryType::Income->value, $start, $end, $userId, $month]);
+
+        return array_map(
+            fn (array $row): IncomeGoalProgress => new IncomeGoalProgress(
+                (int) $row['id'],
+                (string) $row['category_name'],
+                (int) $row['target_cents'],
+                (int) $row['received_cents'],
             ),
             $stmt->fetchAll(),
         );

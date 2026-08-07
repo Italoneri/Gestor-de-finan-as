@@ -28,6 +28,7 @@
 - [Running it](#running-it)
 - [Tests](#tests)
 - [Configuration](#configuration)
+- [Deploy](#deploy)
 - [Roadmap](#roadmap)
 
 ## Why no framework?
@@ -153,9 +154,10 @@ Regex validates **shape**; security comes from hashing, rate limiting and prepar
 
 - **Transactions** — CRUD with amounts in cents, validated dates, type derived from the category (mismatch impossible by construction)
 - **Categories and accounts** — per-user CRUDs; deletion blocked by `ON DELETE RESTRICT` while in use
-- **Dashboard** — balance, month income × expenses, expenses-by-category chart, budgets with progress bars
+- **Dashboard** — balance, month income × expenses, expenses-by-category chart, ceilings and goals with progress bars
 - **Monthly report** — per-category summary with a month picker
-- **Spending budgets** — monthly limit per category with upsert and over-limit alert
+- **Spending ceilings** — monthly limit per expense category with upsert and over-limit alert
+- **Income goals** — monthly target per income category with upsert, amount left and a reached highlight
 - **Filters and search** — period, category, type, text (escaped `LIKE`), whitelist-based sorting, pagination
 - **CSV export** — honoring active filters; BOM + semicolons (opens correctly in pt-BR Excel)
 
@@ -169,7 +171,8 @@ src/
   Core/          → Router, Database, Request, Response, Session,
                    Csrf, Validator, View, Middleware, Migrator, ErrorHandler
   Controllers/   → Auth, Registration, PasswordReset, Transaction,
-                   Category, Account, Budget, Dashboard, Report
+                   Category, Account, Planning, Ceiling, IncomeGoal,
+                   Dashboard, Report
   Services/      → AuthService, LoginRateLimiter, RememberMeService,
                    PasswordResetService, EmailVerificationService,
                    ReportService, Tokens, Mailer (interface + LogMailer)
@@ -237,6 +240,17 @@ Coverage mirrors the project's core: password strength case by case, hash/verify
 | `SESSION_NAME` | `finance_session` | Session cookie name |
 
 </details>
+
+## Deploy
+
+**[docs/DEPLOY.md](docs/DEPLOY.md)** — full runbook for hosting on a free Oracle Cloud VM, with automatic HTTPS through Caddy and Let's Encrypt. Written in Portuguese; the commands speak for themselves.
+
+```bash
+cp .env.deploy.example .env.deploy   # point APP_DOMAIN at your domain
+docker compose --env-file .env.deploy -f docker-compose.prod.yml up -d --build
+```
+
+The production stack differs from dev in four ways that matter: the seed does not run (no `teste@exemplo.com` exposed on the internet), `APP_DEBUG` is `false`, sessions live on the volume instead of the container's `/tmp`, and Apache recovers the real client IP through `mod_remoteip` — without it the login throttle would count every user's failures in the same bucket.
 
 ## Roadmap
 

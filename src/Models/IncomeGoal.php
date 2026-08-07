@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-final class Budget
+final class IncomeGoal
 {
     public function __construct(
         public readonly int $id,
         public readonly int $userId,
         public readonly int $categoryId,
         public readonly string $month,
-        public readonly int $limitCents,
+        public readonly int $targetCents,
         public readonly string $categoryName,
     ) {
     }
@@ -26,7 +26,7 @@ final class Budget
             (int) $row['user_id'],
             (int) $row['category_id'],
             (string) $row['month'],
-            (int) $row['limit_cents'],
+            (int) $row['target_cents'],
             (string) $row['category_name'],
         );
     }

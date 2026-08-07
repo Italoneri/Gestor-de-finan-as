@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use App\Models\Budget;
+use App\Models\Ceiling;
 use PDO;
 use PDOException;
 
@@ -12,27 +12,27 @@ use PDOException;
  * Every query is scoped by user_id — cross-user access is impossible at the
  * data layer, not just in controllers.
  */
-final class BudgetRepository
+final class CeilingRepository
 {
     public function __construct(private readonly PDO $pdo)
     {
     }
 
     /**
-     * @return list<Budget>
+     * @return list<Ceiling>
      */
     public function forMonth(int $userId, string $month): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT b.id, b.user_id, b.category_id, b.month, b.limit_cents, c.name AS category_name
-             FROM budgets b
-             JOIN categories c ON c.id = b.category_id
-             WHERE b.user_id = ? AND b.month = ?
+            'SELECT ce.id, ce.user_id, ce.category_id, ce.month, ce.limit_cents, c.name AS category_name
+             FROM ceilings ce
+             JOIN categories c ON c.id = ce.category_id
+             WHERE ce.user_id = ? AND ce.month = ?
              ORDER BY c.name'
         );
         $stmt->execute([$userId, $month]);
 
-        return array_map(Budget::fromRow(...), $stmt->fetchAll());
+        return array_map(Ceiling::fromRow(...), $stmt->fetchAll());
     }
 
     /**
@@ -43,7 +43,7 @@ final class BudgetRepository
     {
         try {
             $stmt = $this->pdo->prepare(
-                'INSERT INTO budgets (user_id, category_id, month, limit_cents) VALUES (?, ?, ?, ?)'
+                'INSERT INTO ceilings (user_id, category_id, month, limit_cents) VALUES (?, ?, ?, ?)'
             );
             $stmt->execute([$userId, $categoryId, $month, $limitCents]);
         } catch (PDOException $e) {
@@ -51,7 +51,7 @@ final class BudgetRepository
                 throw $e;
             }
             $stmt = $this->pdo->prepare(
-                'UPDATE budgets SET limit_cents = ? WHERE user_id = ? AND category_id = ? AND month = ?'
+                'UPDATE ceilings SET limit_cents = ? WHERE user_id = ? AND category_id = ? AND month = ?'
             );
             $stmt->execute([$limitCents, $userId, $categoryId, $month]);
         }
@@ -59,7 +59,7 @@ final class BudgetRepository
 
     public function delete(int $userId, int $id): bool
     {
-        $stmt = $this->pdo->prepare('DELETE FROM budgets WHERE id = ? AND user_id = ?');
+        $stmt = $this->pdo->prepare('DELETE FROM ceilings WHERE id = ? AND user_id = ?');
         $stmt->execute([$id, $userId]);
 
         return $stmt->rowCount() > 0;

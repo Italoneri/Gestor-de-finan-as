@@ -3,6 +3,11 @@ services:
     build: .
     ports:
       - "8000:80"
+    # the entrypoint defaults to prod, so dev has to name itself to get the
+    # seeded test user and the debug error page
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: "true"
     volumes:
       - finance-storage:/var/www/html/storage
 

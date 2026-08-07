@@ -30,7 +30,8 @@ final class MigratorTest extends TestCase
             'accounts',
             'categories',
             'transactions',
-            'budgets',
+            'ceilings',
+            'income_goals',
         ];
         foreach ($expected as $table) {
             $this->assertContains($table, $tables);

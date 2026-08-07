@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use App\Core\Migrator;
-use App\Repositories\BudgetRepository;
+use App\Repositories\CeilingRepository;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
-final class BudgetRepositoryTest extends TestCase
+final class CeilingRepositoryTest extends TestCase
 {
     private PDO $pdo;
-    private BudgetRepository $repo;
+    private CeilingRepository $repo;
     private int $anaId;
     private int $beaId;
     private int $marketCat;
@@ -28,7 +28,7 @@ final class BudgetRepositoryTest extends TestCase
         $this->anaId = $this->insertUser('ana@exemplo.com');
         $this->beaId = $this->insertUser('bea@exemplo.com');
         $this->marketCat = $this->insertCategory($this->anaId, 'Mercado');
-        $this->repo = new BudgetRepository($this->pdo);
+        $this->repo = new CeilingRepository($this->pdo);
     }
 
     public function testUpsertInsertsThenUpdatesSameCategoryAndMonth(): void
@@ -36,14 +36,14 @@ final class BudgetRepositoryTest extends TestCase
         $this->repo->upsert($this->anaId, $this->marketCat, '2026-07', 80000);
         $this->repo->upsert($this->anaId, $this->marketCat, '2026-07', 95000);
 
-        $budgets = $this->repo->forMonth($this->anaId, '2026-07');
+        $ceilings = $this->repo->forMonth($this->anaId, '2026-07');
 
-        $this->assertCount(1, $budgets);
-        $this->assertSame(95000, $budgets[0]->limitCents);
-        $this->assertSame('Mercado', $budgets[0]->categoryName);
+        $this->assertCount(1, $ceilings);
+        $this->assertSame(95000, $ceilings[0]->limitCents);
+        $this->assertSame('Mercado', $ceilings[0]->categoryName);
     }
 
-    public function testForMonthListsOnlyOwnBudgetsOfThatMonth(): void
+    public function testForMonthListsOnlyOwnCeilingsOfThatMonth(): void
     {
         $leisure = $this->insertCategory($this->anaId, 'Lazer');
         $beaCat = $this->insertCategory($this->beaId, 'Dela');
@@ -51,13 +51,13 @@ final class BudgetRepositoryTest extends TestCase
         $this->repo->upsert($this->anaId, $leisure, '2026-08', 30000);
         $this->repo->upsert($this->beaId, $beaCat, '2026-07', 10000);
 
-        $budgets = $this->repo->forMonth($this->anaId, '2026-07');
+        $ceilings = $this->repo->forMonth($this->anaId, '2026-07');
 
-        $this->assertCount(1, $budgets);
-        $this->assertSame('Mercado', $budgets[0]->categoryName);
+        $this->assertCount(1, $ceilings);
+        $this->assertSame('Mercado', $ceilings[0]->categoryName);
     }
 
-    public function testDeletesOnlyOwnBudget(): void
+    public function testDeletesOnlyOwnCeiling(): void
     {
         $this->repo->upsert($this->anaId, $this->marketCat, '2026-07', 80000);
         $id = $this->repo->forMonth($this->anaId, '2026-07')[0]->id;

@@ -1,5 +1,6 @@
 /vendor/
 .env
+.env.deploy
 /database/*.sqlite
 .phpunit.result.cache
 .phpunit.cache/
