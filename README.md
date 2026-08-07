@@ -28,6 +28,7 @@
 - [Como rodar](#como-rodar)
 - [Testes](#testes)
 - [Configuração](#configuração)
+- [Deploy](#deploy)
 - [Roadmap](#roadmap)
 
 ## Por que sem framework?
@@ -239,6 +240,17 @@ O foco espelha o diferencial: força de senha caso a caso, hash/verify, bloqueio
 | `SESSION_NAME` | `finance_session` | Nome do cookie de sessão |
 
 </details>
+
+## Deploy
+
+**[docs/DEPLOY.md](docs/DEPLOY.md)** — runbook completo para hospedar numa VM gratuita da Oracle Cloud, com HTTPS automático via Caddy e Let's Encrypt.
+
+```bash
+cp .env.deploy.example .env.deploy   # aponte APP_DOMAIN para o seu domínio
+docker compose --env-file .env.deploy -f docker-compose.prod.yml up -d --build
+```
+
+A stack de produção difere da de dev em quatro pontos que importam: o seed não roda (nada de `teste@exemplo.com` exposto na internet), `APP_DEBUG` é `false`, as sessões ficam no volume em vez do `/tmp` do container, e o Apache recupera o IP real do cliente via `mod_remoteip` — sem isso o bloqueio por tentativas contaria as falhas de todos os usuários no mesmo balde.
 
 ## Roadmap
 

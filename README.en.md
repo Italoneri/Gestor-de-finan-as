@@ -28,6 +28,7 @@
 - [Running it](#running-it)
 - [Tests](#tests)
 - [Configuration](#configuration)
+- [Deploy](#deploy)
 - [Roadmap](#roadmap)
 
 ## Why no framework?
@@ -239,6 +240,17 @@ Coverage mirrors the project's core: password strength case by case, hash/verify
 | `SESSION_NAME` | `finance_session` | Session cookie name |
 
 </details>
+
+## Deploy
+
+**[docs/DEPLOY.md](docs/DEPLOY.md)** — full runbook for hosting on a free Oracle Cloud VM, with automatic HTTPS through Caddy and Let's Encrypt. Written in Portuguese; the commands speak for themselves.
+
+```bash
+cp .env.deploy.example .env.deploy   # point APP_DOMAIN at your domain
+docker compose --env-file .env.deploy -f docker-compose.prod.yml up -d --build
+```
+
+The production stack differs from dev in four ways that matter: the seed does not run (no `teste@exemplo.com` exposed on the internet), `APP_DEBUG` is `false`, sessions live on the volume instead of the container's `/tmp`, and Apache recovers the real client IP through `mod_remoteip` — without it the login throttle would count every user's failures in the same bucket.
 
 ## Roadmap
 

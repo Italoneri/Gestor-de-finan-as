@@ -1,0 +1,49 @@
+# Production stack. Run it with the deploy env file, which supplies APP_DOMAIN:
+#   docker compose --env-file .env.deploy -f docker-compose.prod.yml up -d --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    # no ports: the app is only reachable through caddy
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "false"
+      APP_URL: https://${APP_DOMAIN}
+      SESSION_NAME: ${SESSION_NAME:-finance_session}
+    volumes:
+      - finance-storage:/var/www/html/storage
+    networks:
+      - fluxo
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    networks:
+      - fluxo
+
+volumes:
+  finance-storage:
+  # caddy-data holds the issued certificates and the ACME account key. Losing
+  # it forces a reissue, which counts against the Let's Encrypt rate limit.
+  caddy-data:
+  caddy-config:
+
+networks:
+  fluxo:
+    # pinned so docker/remoteip.conf can trust this exact subnet instead of the
+    # whole private range, and kept outside Docker's auto-assignment pool so no
+    # other network can be handed the same addresses
+    ipam:
+      config:
+        - subnet: 10.89.0.0/24
