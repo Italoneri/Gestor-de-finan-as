@@ -174,8 +174,8 @@ src/
                    Category, Account, Planning, Ceiling, IncomeGoal,
                    Dashboard, Report
   Services/      → AuthService, LoginRateLimiter, RememberMeService,
-                   PasswordResetService, EmailVerificationService,
-                   ReportService, Tokens, Mailer (interface + LogMailer)
+                   PasswordResetService, ReportService, Tokens,
+                   Mailer (interface + LogMailer)
   Repositories/  → one per aggregate, every method requires user_id
   Models/        → readonly entities + value objects (Money) + enums
   Views/         → PHP templates with mandatory output escaping
@@ -212,12 +212,12 @@ docker compose up --build   # http://localhost:8000
 
 Test user (created by the seed): **`teste@exemplo.com`** / **`Senha@123`**
 
-There is no SMTP in dev: verification and reset e-mails land in **`storage/mail.log`** — open the file and follow the link.
+Signing up logs you straight in — there is no e-mail confirmation. The only flow that sends e-mail is the password reset, and there is no SMTP: the link lands in **`storage/mail.log`** — open the file and follow it.
 
 ## Tests
 
 ```bash
-composer test    # 177 PHPUnit tests (unit + integration on in-memory SQLite)
+composer test    # 196 PHPUnit tests (unit + integration on in-memory SQLite)
 composer lint    # PSR-12 via phpcs
 composer check   # both
 ```

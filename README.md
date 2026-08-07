@@ -174,8 +174,8 @@ src/
                    Category, Account, Planning, Ceiling, IncomeGoal,
                    Dashboard, Report
   Services/      → AuthService, LoginRateLimiter, RememberMeService,
-                   PasswordResetService, EmailVerificationService,
-                   ReportService, Tokens, Mailer (interface + LogMailer)
+                   PasswordResetService, ReportService, Tokens,
+                   Mailer (interface + LogMailer)
   Repositories/  → um por agregado, todo método exige user_id
   Models/        → entidades readonly + value objects (Money) + enums
   Views/         → templates PHP com escape obrigatório na saída
@@ -212,12 +212,12 @@ docker compose up --build   # http://localhost:8000
 
 Usuário de teste (criado pelo seed): **`teste@exemplo.com`** / **`Senha@123`**
 
-Em dev não há SMTP: os e-mails de verificação e reset aparecem em **`storage/mail.log`** — abra o arquivo e clique no link.
+O cadastro entra direto — não há confirmação de e-mail. O único fluxo que manda e-mail é o reset de senha, e não há SMTP: o link aparece em **`storage/mail.log`** — abra o arquivo e clique nele.
 
 ## Testes
 
 ```bash
-composer test    # 177 testes PHPUnit (unit + integration com SQLite in-memory)
+composer test    # 196 testes PHPUnit (unit + integration com SQLite in-memory)
 composer lint    # PSR-12 via phpcs
 composer check   # os dois
 ```

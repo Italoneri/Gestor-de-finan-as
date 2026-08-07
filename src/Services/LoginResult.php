@@ -9,5 +9,4 @@ enum LoginResult
     case Success;
     case InvalidCredentials;
     case RateLimited;
-    case EmailNotVerified;
 }

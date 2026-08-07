@@ -26,14 +26,13 @@ $month = date('Y-m');
 $pdo->beginTransaction();
 
 $insertUser = $pdo->prepare(
-    'INSERT INTO users (name, email, password_hash, email_verified_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO users (name, email, password_hash, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?)'
 );
 $insertUser->execute([
     'Usuário Teste',
     TEST_EMAIL,
     password_hash(TEST_PASSWORD, PASSWORD_DEFAULT),
-    $now,
     $now,
     $now,
 ]);

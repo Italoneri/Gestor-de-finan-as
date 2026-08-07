@@ -11,7 +11,6 @@ final class User
         public readonly string $name,
         public readonly string $email,
         public readonly string $passwordHash,
-        public readonly ?string $emailVerifiedAt,
     ) {
     }
 
@@ -25,7 +24,6 @@ final class User
             (string) $row['name'],
             (string) $row['email'],
             (string) $row['password_hash'],
-            $row['email_verified_at'] === null ? null : (string) $row['email_verified_at'],
         );
     }
 }

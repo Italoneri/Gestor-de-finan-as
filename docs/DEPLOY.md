@@ -220,16 +220,17 @@ da permissão em `/var/lib/docker`.
 
 ### Recuperar senha
 
-O app usa o `LogMailer`: nenhum e-mail sai de verdade, os links vão para um arquivo.
+O app usa o `LogMailer`: nenhum e-mail sai de verdade, o link vai para um arquivo.
 Peça o reset pela tela normal e depois pegue o link:
 
 ```bash
 fluxo exec app tail -n 40 storage/mail.log
 ```
 
-Se um dia quiser e-mail de verdade, é só implementar `MailerInterface`
-(`src/Services/MailerInterface.php`) com SMTP e trocar a instância em
-`public/index.php`.
+Reset de senha é o único fluxo que depende de e-mail — o cadastro não pede
+confirmação nenhuma. Se um dia quiser e-mail de verdade, é só implementar
+`MailerInterface` (`src/Services/MailerInterface.php`) com SMTP e trocar a
+instância em `public/index.php`.
 
 ### Logs
 
@@ -262,5 +263,6 @@ O Caddy está de pé mas o app não. `fluxo logs app` mostra o motivo — normal
 uma migration que falhou ou permissão em `storage/`.
 
 **Perdi o acesso e não tenho conta.**
-O cadastro é aberto: acesse `/register` e crie uma. Se quiser fechar o cadastro
-depois, remova as rotas `/register` de `public/index.php`.
+O cadastro é aberto e entra direto, sem confirmação de e-mail: acesse `/register`
+e crie uma. Como é aberto de verdade, qualquer um que descobrir o domínio também
+cria — se quiser fechar depois, remova as rotas `/register` de `public/index.php`.

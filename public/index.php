@@ -30,7 +30,6 @@ use App\Repositories\IncomeGoalRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
-use App\Services\EmailVerificationService;
 use App\Services\LoginRateLimiter;
 use App\Services\LogMailer;
 use App\Services\ReportService;
@@ -68,7 +67,6 @@ $csrf = new Csrf($session);
 $users = new UserRepository($pdo);
 $auth = new AuthService($users, new LoginRateLimiter($pdo), $session);
 $rememberMe = new RememberMeService($pdo);
-$verification = new EmailVerificationService($pdo, $users);
 $resets = new PasswordResetService($pdo, $users);
 $mailer = new LogMailer($config->basePath('storage/mail.log'));
 
@@ -91,7 +89,7 @@ $view->share('currentPath', parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PA
 $view->share('theme', Theme::fromCookie($_COOKIE[Theme::COOKIE_NAME] ?? null));
 
 $authController = new AuthController($auth, $rememberMe, $view, $session, $secureCookies);
-$registration = new RegistrationController($auth, $verification, $mailer, $view, $session, $appUrl);
+$registration = new RegistrationController($auth, $view, $session);
 $passwordReset = new PasswordResetController($resets, $mailer, $view, $session, $appUrl);
 $categoryRepo = new CategoryRepository($pdo);
 $accountRepo = new AccountRepository($pdo);
@@ -124,7 +122,6 @@ $router->get('/', Middleware::auth($auth, fn (): Response => $dashboardCtrl->ind
 
 $router->get('/register', Middleware::guest($auth, fn (): Response => $registration->showRegister()));
 $router->post('/register', Middleware::csrf($csrf, fn (Request $r): Response => $registration->register($r)));
-$router->get('/verify-email', fn (Request $r): Response => $registration->verifyEmail($r));
 
 $router->get('/login', Middleware::guest($auth, fn (): Response => $authController->showLogin()));
 $router->post('/login', Middleware::csrf($csrf, fn (Request $r): Response => $authController->login($r)));

@@ -27,9 +27,8 @@ final class AuthService
     }
 
     /**
-     * Creates the account without logging in — the user must verify the
-     * e-mail first. Returns the new user id, or null when the e-mail is
-     * already taken (unique constraint, no check-then-insert race).
+     * Returns the new user id, or null when the e-mail is already taken
+     * (unique constraint, no check-then-insert race).
      */
     public function register(string $name, string $email, string $password): ?int
     {
@@ -56,11 +55,6 @@ final class AuthService
             $this->rateLimiter->recordFailure($email, $ip);
 
             return LoginResult::InvalidCredentials;
-        }
-
-        // only revealed to whoever already holds the correct password
-        if ($user->emailVerifiedAt === null) {
-            return LoginResult::EmailNotVerified;
         }
 
         $this->rateLimiter->clear($email);
